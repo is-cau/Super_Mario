@@ -187,22 +187,19 @@ set(GROUND_ROW - 4, 115, "S"); set(GROUND_ROW - 3, 116, "S"); set(GROUND_ROW - 2
 set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3, 154, "S");
 
 // === 终点旗帜 ===
-// 城堡 (col 204-207)
-set(GROUND_ROW - 4, 204, "c"); set(GROUND_ROW - 4, 205, "c");
-set(GROUND_ROW - 3, 204, "c"); set(GROUND_ROW - 3, 205, "c");
-set(GROUND_ROW - 2, 204, "c"); set(GROUND_ROW - 2, 205, "c");
-set(GROUND_ROW - 1, 204, "c"); set(GROUND_ROW - 1, 205, "c");
-// 城堡前地面
-for (let c = 204; c < 208; c++) {
+// 终点旗帜 (col 198)
+set(GROUND_ROW - 1, 198, "F");
+set(GROUND_ROW, 198, "G"); set(GROUND_ROW, 199, "G");
+
+// 城堡 (col 202-204，坐在地面上)
+set(GROUND_ROW - 4, 202, "c"); set(GROUND_ROW - 4, 203, "c");
+set(GROUND_ROW - 3, 202, "c"); set(GROUND_ROW - 3, 203, "c");
+set(GROUND_ROW - 2, 202, "c"); set(GROUND_ROW - 2, 203, "c");
+set(GROUND_ROW - 1, 202, "c"); set(GROUND_ROW - 1, 203, "c");
+// 城堡下地面
+for (let c = 202; c < 206; c++) {
   for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "G");
 }
-// 终点旗帜 (col 202，放在地面同一行确保碰撞)
-set(GROUND_ROW - 1, 202, "F");
-// 把旗子的碰撞体扩大（修改 Flag 的 y 让它从更低位置开始）
-// 实际上 Flag 的 y 在构建时由 row*TILE 决定，这里 GR12 没问题
-// 补一个标记确保地面在旗帜下面
-set(GROUND_ROW, 202, "G");
-set(GROUND_ROW, 203, "G");
 
 // 确保每行都有足够长度
 for (let r = 0; r < ROWS; r++) {
@@ -259,7 +256,10 @@ export function buildLevel(): LevelData {
           enemies.push(new Goomba(x, y));
           break;
         case "c":
-          if (castleX === 0) { castleX = x; castleY = y - TILE * 3; }
+          if (castleX === 0) {
+            castleX = x;
+            castleY = (GROUND_ROW * TILE) - 176; // 城堡底对齐地面
+          }
           break;
         case "F":
           flag = new Flag(x, y);
