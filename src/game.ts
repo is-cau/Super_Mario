@@ -41,6 +41,7 @@ export class Game {
   deathAnim: number = 0;    // 死亡弹跳动画帧计数
   deathVY: number = 0;      // 死亡弹跳速度
   timeLeft: number = 400;   // 倒计时（秒）
+  titleCard: number = 0;    // 标题卡显示帧
 
   constructor() {
     this.canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
@@ -81,6 +82,7 @@ export class Game {
     this.deathAnim = 0;
     this.deathVY = 0;
     this.timeLeft = 400;
+    this.titleCard = 120; // 2秒标题卡
     this.player = new Player(80, (13 - 2) * TILE); // 地面之上
     clearParticles();
     initBackground(0);
@@ -135,6 +137,7 @@ export class Game {
 
   update(dt: number = 1) {
     this.animTick++;
+    if (this.titleCard > 0) { this.titleCard--; return; }
     if (this.state !== "playing") {
       if (this.state === "gameover") this.gameOverTimer++;
       if (this.state === "win") this.winTimer++;
@@ -739,6 +742,22 @@ export class Game {
 
     if (this.state === "playing" || this.state === "win") {
       const { level, player } = this;
+
+      // 标题卡
+      if (this.titleCard > 0) {
+        this.titleCard--;
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(0, SCREEN_HEIGHT / 2 - 40, SCREEN_WIDTH, 80);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 28px 'Courier New', monospace";
+        ctx.fillText("WORLD  1-1", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 5);
+        ctx.font = "16px 'Courier New', monospace";
+        ctx.fillText(`❤ x${player.lives}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 30);
+        this.drawHUD();
+        return; // Title card freezes game
+      }
+
       // 平台/地面
       for (const p of level.platforms) {
         if (p.right < cameraX - 32 || p.left > cameraX + SCREEN_WIDTH + 32) continue;
