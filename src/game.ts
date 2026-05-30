@@ -322,6 +322,9 @@ export class Game {
         else { if (player.lives <= 1) { this.state = "gameover"; return; } this.deathAnim = 30; this.deathVY = -8; }
         playSfx("hurt");
       }
+      for (const fb of this.fireballs) {
+        if (fb.alive && p.alive && fb.collides(p)) { fb.alive = false; p.alive = false; player.score += 400; playSfx("stomp"); }
+      }
     }
 
     // 1UP 蘑菇
@@ -787,6 +790,11 @@ export class Game {
     const score = String(this.player.score).padStart(6, "0");
     ctx.fillText(score, 80, 20);
     ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}`, SCREEN_WIDTH / 2 - 50, 20);
+    if (this.timeLeft <= 100 && this.animTick % 30 < 15) {
+      ctx.fillStyle = "#FF0000"; ctx.font = "bold 16px 'Courier New', monospace";
+    } else {
+      ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 14px 'Courier New', monospace";
+    }
     ctx.fillText(`⏱ ${this.timeLeft}`, SCREEN_WIDTH / 2 + 60, 20);
     ctx.fillText(`1-1`, SCREEN_WIDTH / 2 + 156, 20);
     // 状态提示 — 右对齐显示
