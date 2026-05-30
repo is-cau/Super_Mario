@@ -4,11 +4,12 @@
  */
 
 import { drawSprite, solidMatrix, overlay } from "./renderer";
+import { drawCached } from "./assets";
 
 // ==================== 像素数据 ====================
 
 /** 马里奥 小 16×16 (行走帧) */
-const MARIO_SMALL_1: number[][] = [
+export const MARIO_SMALL_1: number[][] = [
   [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
   [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
   [0,0,4,4,4,3,3,4,3,0,0,0,0,0,0,0],
@@ -28,7 +29,7 @@ const MARIO_SMALL_1: number[][] = [
 ];
 
 /** 马里奥 小 行走帧 2 */
-const MARIO_SMALL_2: number[][] = [
+export const MARIO_SMALL_2: number[][] = [
   [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
   [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
   [0,0,4,4,4,3,3,4,3,0,0,0,0,0,0,0],
@@ -48,7 +49,7 @@ const MARIO_SMALL_2: number[][] = [
 ];
 
 /** 马里奥 站立/跳跃 */
-const MARIO_SMALL_STAND: number[][] = [
+export const MARIO_SMALL_STAND: number[][] = [
   [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0],
   [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
   [0,0,4,4,4,3,3,4,3,0,0,0,0,0,0,0],
@@ -68,7 +69,7 @@ const MARIO_SMALL_STAND: number[][] = [
 ];
 
 /** 马里奥 大 16×32 */
-const MARIO_BIG: number[][] = [
+export const MARIO_BIG: number[][] = [
   [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
   [0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
   [0,0,0,0,4,4,4,3,3,4,3,0,0,0,0,0],
@@ -104,7 +105,7 @@ const MARIO_BIG: number[][] = [
 ];
 
 /** 马里奥 跳跃帧 大 */
-const MARIO_BIG_JUMP: number[][] = [
+export const MARIO_BIG_JUMP: number[][] = [
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0],
   [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
@@ -140,7 +141,7 @@ const MARIO_BIG_JUMP: number[][] = [
 ];
 
 /** 砖块 16×16 */
-const BRICK: number[][] = [
+export const BRICK: number[][] = [
   [10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10],
   [10,11,11,11,11,10,10,11,11,11,11,10,10,11,11,10],
   [10,11,11,11,11,10,10,11,11,11,11,10,10,11,11,10],
@@ -160,7 +161,7 @@ const BRICK: number[][] = [
 ];
 
 /** 地面砖块 16×16 (带草) */
-const GROUND: number[][] = [
+export const GROUND: number[][] = [
   [13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13],
   [14,13,13,14,13,13,14,13,13,14,13,13,14,13,13,14],
   [10,11,11,10,11,10,11,11,10,11,10,11,11,10,11,10],
@@ -180,7 +181,7 @@ const GROUND: number[][] = [
 ];
 
 /** 问号砖 (亮) 16×16 */
-const QUESTION_LIT: number[][] = [
+export const QUESTION_LIT: number[][] = [
   [20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20],
   [20,20,20,21,21,21,21,21,21,21,21,21,21,20,20,20],
   [20,20,21,20,20,20,20,20,20,20,20,20,20,21,20,20],
@@ -200,7 +201,7 @@ const QUESTION_LIT: number[][] = [
 ];
 
 /** 问号砖 (暗) */
-const QUESTION_DARK: number[][] = [
+export const QUESTION_DARK: number[][] = [
   [21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21],
   [21,21,21,20,20,20,20,20,20,20,20,20,20,21,21,21],
   [21,21,20,21,21,21,21,21,21,21,21,21,21,20,21,21],
@@ -220,7 +221,7 @@ const QUESTION_DARK: number[][] = [
 ];
 
 /** 金币 16×16 */
-const COIN_1: number[][] = [
+export const COIN_1: number[][] = [
   [0,0,0,0,30,30,30,30,30,30,30,30,0,0,0,0],
   [0,0,30,30,30,31,31,31,31,31,30,30,30,30,0,0],
   [0,30,30,31,31,31,30,30,30,30,31,31,30,30,30,0],
@@ -240,7 +241,7 @@ const COIN_1: number[][] = [
 ];
 
 /** 金币 瘦帧（旋转效果） */
-const COIN_2: number[][] = [
+export const COIN_2: number[][] = [
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,0,0,30,30,30,30,0,0,0,0,0,0],
   [0,0,0,0,30,30,31,31,31,31,30,30,0,0,0,0],
@@ -260,7 +261,7 @@ const COIN_2: number[][] = [
 ];
 
 /** 栗子仔 16×16 */
-const GOOMBA_1: number[][] = [
+export const GOOMBA_1: number[][] = [
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,50,50,50,50,50,50,50,50,0,0,0,0],
   [0,0,0,50,50,50,50,50,50,50,50,50,50,0,0,0],
@@ -280,7 +281,7 @@ const GOOMBA_1: number[][] = [
 ];
 
 /** 栗子仔 帧2 */
-const GOOMBA_2: number[][] = [
+export const GOOMBA_2: number[][] = [
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,50,50,50,50,50,50,50,50,0,0,0,0],
   [0,0,0,50,50,50,50,50,50,50,50,50,50,0,0,0],
@@ -300,7 +301,7 @@ const GOOMBA_2: number[][] = [
 ];
 
 /** 蘑菇 16×16 */
-const MUSHROOM: number[][] = [
+export const MUSHROOM: number[][] = [
   [0,0,0,0,40,40,40,40,40,40,40,40,0,0,0,0],
   [0,0,40,40,40,41,41,41,41,41,40,40,40,0,0],
   [0,40,40,41,40,41,41,40,41,41,40,41,40,40,0],
@@ -320,7 +321,7 @@ const MUSHROOM: number[][] = [
 ];
 
 /** 旗杆顶球 8×8 */
-const POLE_BALL: number[][] = [
+export const POLE_BALL: number[][] = [
   [0,0,70,70,70,70,0,0],
   [0,70,71,71,71,71,70,0],
   [70,71,71,70,70,71,71,70],
@@ -332,6 +333,11 @@ const POLE_BALL: number[][] = [
 ];
 
 import { COLORS, TILE, GRAVITY } from "./settings";
+
+// 缓存引用（由 game.ts 在初始化时设置）
+import type { Cache } from "./assets";
+let _cache: Cache | null = null;
+export function setSpriteCache(c: Cache | null) { _cache = c; }
 
 // ==================== 类型定义 ====================
 
@@ -408,21 +414,34 @@ export class Player extends Sprite {
   draw(ctx: CanvasRenderingContext2D, cameraX: number, _tick?: number) {
     const sx = this.x - cameraX;
     const sy = this.y;
-    const PS = 2;
-
-    if (this.big) {
-      const data = this.onGround && Math.abs(this.vx) > 0.5
-        ? (this.animFrame % 2 === 0 ? MARIO_BIG : MARIO_BIG_JUMP)
-        : MARIO_BIG;
-      drawSprite(ctx, data, sx, sy, PS, !this.facingRight);
-    } else {
-      let data = MARIO_SMALL_STAND;
-      if (this.onGround && Math.abs(this.vx) > 0.5) {
-        data = this.animFrame % 2 === 0 ? MARIO_SMALL_1 : MARIO_SMALL_2;
-      } else if (!this.onGround) {
-        data = MARIO_SMALL_1;
+    const c = _cache;
+    if (c) {
+      if (this.big) {
+        const img = this.onGround && Math.abs(this.vx) > 0.5
+          ? (this.animFrame % 2 === 0 ? c.mb0 : c.mb1) : c.mb0;
+        drawCached(ctx, img, sx, sy, !this.facingRight);
+      } else {
+        let img = c.ms0;
+        if (this.onGround && Math.abs(this.vx) > 0.5) {
+          img = this.animFrame % 2 === 0 ? c.ms1 : c.ms2;
+        } else if (!this.onGround) {
+          img = c.ms1;
+        }
+        drawCached(ctx, img, sx, sy, !this.facingRight);
       }
-      drawSprite(ctx, data, sx, sy, PS, !this.facingRight);
+    } else {
+      const PS = 2;
+      if (this.big) {
+        const data = this.onGround && Math.abs(this.vx) > 0.5
+          ? (this.animFrame % 2 === 0 ? MARIO_BIG : MARIO_BIG_JUMP) : MARIO_BIG;
+        drawSprite(ctx, data, sx, sy, PS, !this.facingRight);
+      } else {
+        let data = MARIO_SMALL_STAND;
+        if (this.onGround && Math.abs(this.vx) > 0.5) {
+          data = this.animFrame % 2 === 0 ? MARIO_SMALL_1 : MARIO_SMALL_2;
+        } else if (!this.onGround) { data = MARIO_SMALL_1; }
+        drawSprite(ctx, data, sx, sy, PS, !this.facingRight);
+      }
     }
   }
 }
@@ -440,12 +459,17 @@ export class Platform extends Sprite {
 
   draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     const sx = this.x - cameraX;
-    const PS = 2.5; // 16px * 2.5 = 40px
-    const data = this.kind === "ground" ? GROUND : BRICK;
-    // 铺满整个平台
-    const w = Math.ceil(this.w / (16 * PS));
-    for (let i = 0; i < w; i++) {
-      drawSprite(ctx, data, sx + i * 16 * PS, this.y, PS);
+    const c = _cache;
+    if (c) {
+      const img = this.kind === "ground" ? c.ground : c.brick;
+      const tw = this.kind === "ground" ? 40 : 40; // 16 * 2.5 = 40
+      const count = Math.ceil(this.w / tw);
+      for (let i = 0; i < count; i++) ctx.drawImage(img, sx + i * tw, this.y);
+    } else {
+      const PS = 2.5;
+      const data = this.kind === "ground" ? GROUND : BRICK;
+      const count = Math.ceil(this.w / (16 * PS));
+      for (let i = 0; i < count; i++) drawSprite(ctx, data, sx + i * 16 * PS, this.y, PS);
     }
   }
 }
@@ -464,14 +488,15 @@ export class QuestionBlock extends Sprite {
 
   draw(ctx: CanvasRenderingContext2D, cameraX: number, _tick?: number) {
     const sx = this.x - cameraX;
-    const PS = 2.5;
     if (this.used) {
       ctx.fillStyle = "#646464";
       ctx.fillRect(sx, this.y, TILE, TILE);
       ctx.strokeStyle = "#4a4a4a";
       ctx.strokeRect(sx, this.y, TILE, TILE);
+    } else if (_cache) {
+      drawCached(ctx, this.lit ? _cache.qLit : _cache.qDark, sx, this.y);
     } else {
-      drawSprite(ctx, this.lit ? QUESTION_LIT : QUESTION_DARK, sx, this.y, PS);
+      drawSprite(ctx, this.lit ? QUESTION_LIT : QUESTION_DARK, sx, this.y, 2.5);
     }
   }
 
@@ -496,9 +521,11 @@ export class Coin extends Sprite {
   draw(ctx: CanvasRenderingContext2D, cameraX: number, _tick?: number) {
     if (this.collected) return;
     const sx = this.x - cameraX;
-    const PS = 1.25;
-    const data = this.animFrame < 4 ? COIN_1 : COIN_2;
-    drawSprite(ctx, data, sx, this.y, PS);
+    if (_cache) {
+      drawCached(ctx, this.animFrame < 4 ? _cache.c1 : _cache.c2, sx, this.y);
+    } else {
+      drawSprite(ctx, this.animFrame < 4 ? COIN_1 : COIN_2, sx, this.y, 1.25);
+    }
   }
 
   updateAnim() {
@@ -520,8 +547,11 @@ export class Mushroom extends Sprite {
   draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     if (this.collected) return;
     const sx = this.x - cameraX;
-    const PS = 1.875;
-    drawSprite(ctx, MUSHROOM, sx, this.y, PS);
+    if (_cache) {
+      drawCached(ctx, _cache.mush, sx, this.y);
+    } else {
+      drawSprite(ctx, MUSHROOM, sx, this.y, 1.875);
+    }
   }
 }
 
@@ -544,14 +574,16 @@ export class Goomba extends Sprite {
       if (this.squishTimer > 0) {
         const sx = this.x - cameraX;
         ctx.fillStyle = "#A82800";
-        ctx.fillRect(sx, this.y + 20, 30, 10);
+        ctx.fillRect(sx + 2, this.y + 20, 26, 10);
       }
       return;
     }
     const sx = this.x - cameraX;
-    const PS = 1.875;
-    const data = this.animFrame % 2 === 0 ? GOOMBA_1 : GOOMBA_2;
-    drawSprite(ctx, data, sx, this.y, PS);
+    if (_cache) {
+      drawCached(ctx, this.animFrame % 2 === 0 ? _cache.g1 : _cache.g2, sx, this.y);
+    } else {
+      drawSprite(ctx, this.animFrame % 2 === 0 ? GOOMBA_1 : GOOMBA_2, sx, this.y, 1.875);
+    }
   }
 
   updateAnim() {
@@ -570,12 +602,14 @@ export class Flag extends Sprite {
 
   draw(ctx: CanvasRenderingContext2D, cameraX: number, _tick?: number) {
     const sx = this.x - cameraX;
-    const PS = 2;
-    // 旗杆
     ctx.fillStyle = "#808080";
     ctx.fillRect(sx + 4, this.y, 2, this.h);
     // 顶球
-    drawSprite(ctx, POLE_BALL, sx - 3, this.y - 8, 2);
+    if (_cache) {
+      drawCached(ctx, _cache.ball, sx - 3, this.y - 8);
+    } else {
+      drawSprite(ctx, POLE_BALL, sx - 3, this.y - 8, 2);
+    }
     // 旗帜
     ctx.fillStyle = COLORS.GREEN;
     ctx.beginPath();

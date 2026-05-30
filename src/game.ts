@@ -6,8 +6,9 @@ import {
   SCREEN_WIDTH, SCREEN_HEIGHT, GRAVITY, PLAYER_ACC, PLAYER_FRICTION,
   PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, SFX_ENABLED, GameState,
 } from "./settings";
-import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag } from "./sprites";
+import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, setSpriteCache } from "./sprites";
 import { buildLevel, LevelData } from "./level";
+import { initCache } from "./assets";
 import { initBackground, updateBackground, drawBackground } from "./background";
 import { updateParticles, drawParticles, clearParticles, spawnBrickParticles, spawnCoinPop, spawnStompParticles, spawnFloatingText, spawnFirework } from "./particles";
 import { playSfx } from "./audio";
@@ -32,6 +33,10 @@ export class Game {
     this.canvas.height = SCREEN_HEIGHT;
     this.ctx = this.canvas.getContext("2d")!;
     this.ctx.imageSmoothingEnabled = false;
+    // 预渲染精灵缓存
+    const cache = initCache();
+    if (cache) setSpriteCache(cache);
+    else console.warn("Sprite cache not supported, using fallback renderer");
   }
 
   resetLevel() {
@@ -62,7 +67,7 @@ export class Game {
 
   // ================== 物理更新 ==================
 
-  update() {
+  update(dt: number = 1) {
     this.animTick++;
     if (this.state !== "playing") {
       if (this.state === "gameover") this.gameOverTimer++;
@@ -86,12 +91,12 @@ export class Game {
       player.facingRight = true;
     }
     player.ax += player.vx * PLAYER_FRICTION;
-    player.vx += player.ax;
-    player.vy += player.ay;
+    player.vx += player.ax * dt;
+    player.vy += player.ay * dt;
     if (Math.abs(player.vx) < 0.1) player.vx = 0;
     player.vx = Math.max(-MAX_SPEED, Math.min(player.vx, MAX_SPEED));
-    player.x += player.vx;
-    player.y += player.vy;
+    player.x += player.vx * dt;
+    player.y += player.vy * dt;
 
     // 行走动画
     player.animTimer++;
@@ -137,9 +142,9 @@ export class Game {
     // 敌人
     for (const enemy of level.enemies) {
       if (!enemy.alive) { if (enemy.squishTimer > 0) enemy.squishTimer--; continue; }
-      enemy.vy += GRAVITY;
-      enemy.x += enemy.vx;
-      enemy.y += enemy.vy;
+      enemy.vy += GRAVITY * dt;
+      enemy.x += enemy.vx * dt;
+      enemy.y += enemy.vy * dt;
       enemy.onGround = false;
       for (const plat of level.platforms) {
         if (enemy.collides(plat)) {
@@ -153,9 +158,9 @@ export class Game {
     // 蘑菇
     for (const mush of this.mushrooms) {
       if (mush.collected) continue;
-      mush.vy += GRAVITY * 0.5;
-      mush.x += mush.vx;
-      mush.y += mush.vy;
+      mush.vy += GRAVITY * 0.5 * dt;
+      mush.x += mush.vx * dt;
+      mush.y += mush.vy * dt;
       for (const plat of level.platforms) {
         if (mush.collides(plat)) {
           if (mush.vy > 0) { mush.y = plat.top - mush.h; mush.vy = 0; }

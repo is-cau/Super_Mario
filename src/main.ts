@@ -7,10 +7,13 @@ import { Game } from "./game";
 const game = new Game();
 game.bindInput();
 
-function loop() {
-  game.update();
+let lastTime = 0;
+function loop(time: number) {
+  const dt = Math.min((time - lastTime) / 16.67, 3); // cap at 3x speed
+  lastTime = time;
+  game.update(dt);
   game.draw();
   requestAnimationFrame(loop);
 }
 
-loop();
+requestAnimationFrame(loop);
