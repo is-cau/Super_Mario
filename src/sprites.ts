@@ -673,10 +673,15 @@ export class Goomba extends Sprite {
   animTimer: number = 0;
   onGround: boolean = false;
   squishTimer: number = 0;
+  /** 巡逻边界 */
+  patrolLeft: number = 0;
+  patrolRight: number = 99999;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, left?: number, right?: number) {
     super(x, y, 30, 30);
     this.vx = -1;
+    if (left !== undefined) this.patrolLeft = left;
+    if (right !== undefined) this.patrolRight = right;
   }
 
   draw(ctx: CanvasRenderingContext2D, cameraX: number, _tick?: number) {
@@ -761,6 +766,50 @@ export class Pipe extends Sprite {
     // 高光
     ctx.fillStyle = "#66FF66";
     ctx.fillRect(sx + 30, this.y + 2, 18, 2);
+  }
+}
+
+// ==================== 城堡 ====================
+
+export class Castle {
+  x: number; y: number;
+  constructor(x: number, y: number) { this.x = x; this.y = y; }
+  draw(ctx: CanvasRenderingContext2D, cameraX: number) {
+    const sx = this.x - cameraX;
+    const w = 96, h = 144;
+    // 主体灰色
+    ctx.fillStyle = "#888888";
+    ctx.fillRect(sx, this.y + 32, w, h);
+    // 垛口
+    for (let i = 0; i < 3; i++) {
+      ctx.fillRect(sx + i * 32, this.y, 32, 40);
+    }
+    // 红色门
+    ctx.fillStyle = "#880000";
+    ctx.fillRect(sx + 32, this.y + h - 32, 32, 32);
+    // 门框
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(sx + 30, this.y + h - 32, 36, 34);
+    // 窗户
+    ctx.fillStyle = "#444";
+    ctx.fillRect(sx + 10, this.y + 60, 16, 16);
+    ctx.fillRect(sx + 70, this.y + 60, 16, 16);
+    // 高光
+    ctx.fillStyle = "#AAAAAA";
+    ctx.fillRect(sx + 2, this.y + 4, 8, 20);
+    ctx.fillRect(sx + 34, this.y + 4, 8, 20);
+    ctx.fillRect(sx + 66, this.y + 4, 8, 20);
+    // 旗杆在城堡顶端
+    ctx.fillStyle = "#666";
+    ctx.fillRect(sx + 46, this.y - 60, 4, 64);
+    ctx.fillStyle = "#00AA00";
+    ctx.beginPath();
+    ctx.moveTo(sx + 50, this.y - 58);
+    ctx.lineTo(sx + 70, this.y - 43);
+    ctx.lineTo(sx + 50, this.y - 28);
+    ctx.closePath();
+    ctx.fill();
   }
 }
 

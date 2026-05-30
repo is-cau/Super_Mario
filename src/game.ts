@@ -6,7 +6,7 @@ import {
   SCREEN_WIDTH, SCREEN_HEIGHT, GRAVITY, PLAYER_ACC, PLAYER_FRICTION,
   PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, SFX_ENABLED, GameState,
 } from "./settings";
-import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
+import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, Castle, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
 import { buildLevel, LevelData } from "./level";
 import { initCache } from "./assets";
 import { initBackground, updateBackground, drawBackground } from "./background";
@@ -169,6 +169,9 @@ export class Game {
       enemy.x += enemy.vx * dt;
       enemy.y += enemy.vy * dt;
       enemy.onGround = false;
+      // 巡逻边界
+      if (enemy.x <= enemy.patrolLeft) { enemy.vx = Math.abs(enemy.vx); enemy.x = enemy.patrolLeft; }
+      if (enemy.x >= enemy.patrolRight) { enemy.vx = -Math.abs(enemy.vx); enemy.x = enemy.patrolRight; }
       for (const plat of level.platforms) {
         if (enemy.collides(plat)) {
           if (enemy.vy > 0) { enemy.y = plat.top - enemy.h; enemy.vy = 0; enemy.onGround = true; }
@@ -337,8 +340,9 @@ export class Game {
       }
     }
 
-    // 砖块（仅 big 时从下方撞击破坏）
-    for (const brick of level.bricks) {
+    // 砖块破坏（大马力欧从下方顶）
+    for (let i = level.bricks.length - 1; i >= 0; i--) {
+      const brick = level.bricks[i];
       if (!brick.alive) continue;
       if (player.big && player.vy < 0 && Math.abs(player.top - brick.bottom) < 12 && Math.abs(player.centerX - brick.centerX) < 20) {
         brick.alive = false;
@@ -347,22 +351,45 @@ export class Game {
         spawnBrickParticles(brick.x, brick.y);
         playSfx("stomp");
         // 从 platforms 移除
-        const idx = level.platforms.indexOf(brick as unknown as Platform);
-        if (idx >= 0) level.platforms.splice(idx, 1);
+        const pidx = level.platforms.indexOf(brick);
+        if (pidx >= 0) level.platforms.splice(pidx, 1);
+        level.bricks.splice(i, 1);
       }
     }
 
     // 旗帜
     if (!this.flagReached && level.flag && player.collides(level.flag)) {
       this.flagReached = true;
-      player.score += 3000 + (player.coins * 100);
+      player.flagSliding = true;
+      player.vx = 0;
+      player.vx = 0; // 停止移动
       playSfx("win");
-      // 计算达到旗帜高度
-      const flagHeight = Math.max(0, player.y - level.flag.y);
-      const timePoints = Math.max(0, 300 - this.animTick) * 10;
-      player.score += timePoints;
-      spawnFloatingText(level.flag.x, level.flag.y + 100, `+${3000 + player.coins * 100 + timePoints}`, "#FFD700");
-      this.state = "win";
+    }
+    // 旗杆滑下动画
+    if (this.flagReached && player.flagSliding && level.flag) {
+      player.y += 2;
+      if (player.bottom >= level.flag.bottom) {
+        player.flagSliding = false;
+        player.onGround = true;
+        player.y = level.flag.bottom - player.h;
+        // 计算分数
+        const timeBonus = Math.max(0, 300 - this.animTick) * 10;
+        player.score += 3000 + player.coins * 100 + timeBonus;
+        spawnFloatingText(level.flag.x + 50, level.flag.y + 20,
+          `+${3000 + player.coins * 100 + timeBonus}`, "#FFD700");
+      }
+    }
+    // 滑下后自动走向城堡
+    if (this.flagReached && !player.flagSliding) {
+      const castleX = (level.castle?.x ?? 6500) + 20;
+      if (player.centerX < castleX) {
+        player.vx = 2;
+        player.facingRight = true;
+      } else {
+        player.vx = 0;
+        this.state = "win";
+        spawnFirework(castleX, SCREEN_HEIGHT - 100);
+      }
     }
 
     // 相机
@@ -434,6 +461,7 @@ export class Game {
       }
       // 旗帜
       if (level.flag) level.flag.draw(ctx, cameraX);
+      if (level.castle) level.castle.draw(ctx, cameraX);
 
       // 火球 星星 道具
       for (const fb of this.fireballs) fb.draw(ctx, cameraX);

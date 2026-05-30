@@ -5,7 +5,7 @@
 
 import { TILE } from "./settings";
 import {
-  Platform, QuestionBlock, Coin, Goomba, Flag, Pipe,
+  Platform, QuestionBlock, Coin, Goomba, Flag, Pipe, Castle,
 } from "./sprites";
 
 /*
@@ -167,7 +167,17 @@ set(GROUND_ROW - 4, 115, "S"); set(GROUND_ROW - 3, 116, "S"); set(GROUND_ROW - 2
 set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3, 154, "S");
 
 // === 终点旗帜 ===
-set(GROUND_ROW - 1, 198, "F");
+// 城堡 (col 204-207)
+set(GROUND_ROW - 4, 204, "c"); set(GROUND_ROW - 4, 205, "c");
+set(GROUND_ROW - 3, 204, "c"); set(GROUND_ROW - 3, 205, "c");
+set(GROUND_ROW - 2, 204, "c"); set(GROUND_ROW - 2, 205, "c");
+set(GROUND_ROW - 1, 204, "c"); set(GROUND_ROW - 1, 205, "c");
+// 城堡前地面
+for (let c = 204; c < 208; c++) {
+  for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "G");
+}
+// 终点旗帜 (col 202)
+set(GROUND_ROW - 1, 202, "F");
 
 // 确保每行都有足够长度
 for (let r = 0; r < ROWS; r++) {
@@ -183,6 +193,7 @@ export interface LevelData {
   enemies: Goomba[];
   flag: Flag | null;
   bricks: Platform[];
+  castle: Castle | null;
   width: number;
 }
 
@@ -193,6 +204,8 @@ export function buildLevel(): LevelData {
   const enemies: Goomba[] = [];
   const bricks: Platform[] = [];
   let flag: Flag | null = null;
+  let castle: Castle | null = null;
+  let castleX = 0, castleY = 0;
 
   for (let row = 0; row < levelMap.length; row++) {
     for (let col = 0; col < levelMap[row].length; col++) {
@@ -218,7 +231,10 @@ export function buildLevel(): LevelData {
           coins.push(new Coin(x + 6, y + 6));
           break;
         case "E":
-          enemies.push(new Goomba(x, y));
+          enemies.push(new Goomba(x, y, x - TILE * 2, x + TILE * 2));
+          break;
+        case "c":
+          if (castleX === 0) { castleX = x; castleY = y - TILE * 3; }
           break;
         case "F":
           flag = new Flag(x, y);
@@ -238,5 +254,8 @@ export function buildLevel(): LevelData {
     }
   }
 
-  return { platforms, questionBlocks, coins, enemies, flag, bricks, width: COLS * TILE };
+  // 构建城堡
+  if (castleX > 0) castle = new Castle(castleX, castleY);
+
+  return { platforms, questionBlocks, coins, enemies, flag, bricks, castle, width: COLS * TILE };
 }
