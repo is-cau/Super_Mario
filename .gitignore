@@ -1,10 +1,3 @@
-__pycache__/
-*.pyc
-*.pyo
-*.exe
-*.egg-info/
+node_modules/
 dist/
-build/
-.venv/
-venv/
-.env
+.vite/
