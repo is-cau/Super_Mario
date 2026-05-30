@@ -831,16 +831,6 @@ export class Castle {
     ctx.fillRect(sx + 2, this.y + 4, 8, 20);
     ctx.fillRect(sx + 34, this.y + 4, 8, 20);
     ctx.fillRect(sx + 66, this.y + 4, 8, 20);
-    // 旗杆在城堡顶端
-    ctx.fillStyle = "#666";
-    ctx.fillRect(sx + 46, this.y - 60, 4, 64);
-    ctx.fillStyle = "#00AA00";
-    ctx.beginPath();
-    ctx.moveTo(sx + 50, this.y - 58);
-    ctx.lineTo(sx + 70, this.y - 43);
-    ctx.lineTo(sx + 50, this.y - 28);
-    ctx.closePath();
-    ctx.fill();
   }
 }
 
