@@ -606,18 +606,32 @@ export class Game {
     }
     // 乌龟碰撞
     for (const k of this.koopas) {
-      if (!player.invincible && k.alive && player.collides(k)) {
-        const fa = player.bottom - k.top < 40 && Math.abs(player.centerX - k.centerX) < 25;
-        if (fa) {
-          if (!k.inShell) { k.alive = false; k.inShell = true; k.vx = 0; k.h = 16; k.y += 14; player.vy = -7; player.score += 300; playSfx("stomp"); }
-          else if (!k.shellMoving) { k.shellMoving = true; k.vx = player.facingRight ? 8 : -8; player.vy = -6; }
-          else { k.shellMoving = false; k.vx = 0; player.vy = -6; }
-        } else if (k.inShell && k.shellMoving) {
-          if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
-          else { if (player.lives <= 1) { this.state = "gameover"; return; } this.deathAnim = 30; this.deathVY = -8; }
-          playSfx("hurt");
-        }
-      } else if (player.starForm && k.alive) { k.alive = false; k.inShell = false; player.score += 300; playSfx("stomp"); }
+      const touching = player.collides(k);
+      if (!touching) continue;
+      if (player.starForm && k.alive) { k.alive = false; k.inShell = false; player.score += 300; playSfx("stomp"); continue; }
+      if (player.invincible) continue;
+      const fa = player.bottom - k.top < 40 && Math.abs(player.centerX - k.centerX) < 25;
+      if (fa && k.alive && !k.inShell) {
+        // 踩活乌龟 → 变壳
+        k.alive = false; k.inShell = true; k.vx = 0; k.h = 16; k.y += 14;
+        player.vy = -7; player.score += 300; playSfx("stomp");
+      } else if (fa && k.inShell && !k.shellMoving) {
+        // 踢静止壳
+        k.shellMoving = true; k.vx = player.facingRight ? 8 : -8; player.vy = -6;
+        player.score += 100; playSfx("stomp");
+      } else if (fa && k.inShell && k.shellMoving) {
+        // 踩滑动壳 → 停住
+        k.shellMoving = false; k.vx = 0; player.vy = -6;
+      } else if (k.inShell && k.shellMoving) {
+        // 被滑壳撞伤
+        if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
+        else { if (player.lives <= 1) { this.state = "gameover"; return; } this.deathAnim = 30; this.deathVY = -8; }
+        playSfx("hurt");
+      } else if (!k.inShell && !fa) {
+        // 侧面碰活乌龟受伤
+        if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; playSfx("hurt"); }
+        else { if (player.lives <= 1) { this.state = "gameover"; return; } this.deathAnim = 30; this.deathVY = -8; playSfx("hurt"); }
+      }
     }
     // 1UP 蘑菇
     for (const m1 of this.oneupMushrooms) {
