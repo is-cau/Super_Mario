@@ -861,9 +861,8 @@ export class Pipe extends Sprite {
 
 // ==================== 城堡 ====================
 
-export class Castle {
-  x: number; y: number;
-  constructor(x: number, y: number) { this.x = x; this.y = y; }
+export class Castle extends Sprite {
+  constructor(x: number, y: number) { super(x, y, 96, 176); }
   draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     const sx = this.x - cameraX;
     const w = 96, h = 144;

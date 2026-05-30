@@ -190,16 +190,12 @@ set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3
 // 大乌龟 Bowser Boss (col 194)
 set(GROUND_ROW - 1, 194, "K");
 
-// 终点旗帜+城堡 (col 199-201，紧挨)
-set(GROUND_ROW - 1, 199, "F");
-set(GROUND_ROW, 199, "G");
-
-// 城堡 (col 200-201)
-set(GROUND_ROW - 4, 200, "c"); set(GROUND_ROW - 4, 201, "c");
-set(GROUND_ROW - 3, 200, "c"); set(GROUND_ROW - 3, 201, "c");
-set(GROUND_ROW - 2, 200, "c"); set(GROUND_ROW - 2, 201, "c");
-set(GROUND_ROW - 1, 200, "c"); set(GROUND_ROW - 1, 201, "c");
-for (let c = 200; c < 204; c++) {
+// 城堡即终点 (col 199-200，碰到城堡通关)
+set(GROUND_ROW - 4, 199, "c"); set(GROUND_ROW - 4, 200, "c");
+set(GROUND_ROW - 3, 199, "c"); set(GROUND_ROW - 3, 200, "c");
+set(GROUND_ROW - 2, 199, "c"); set(GROUND_ROW - 2, 200, "c");
+set(GROUND_ROW - 1, 199, "c"); set(GROUND_ROW - 1, 200, "c");
+for (let c = 199; c < 203; c++) {
   for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "G");
 }
 

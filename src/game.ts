@@ -539,16 +539,16 @@ export class Game {
       }
     }
 
-    // 旗帜 — 碰到即通关
-    if (!this.flagReached && level.flag && player.collides(level.flag)) {
+    // 碰城堡通关
+    if (!this.flagReached && level.castle && player.collides(level.castle)) {
       this.flagReached = true;
       player.vx = 0;
       const timeBonus = Math.max(0, 300 - this.animTick) * 10;
       player.score += 3000 + player.coins * 100 + timeBonus;
-      spawnFloatingText(level.flag.x + 50, level.flag.y + 20,
+      spawnFloatingText(level.castle.x + 48, SCREEN_HEIGHT - 250,
         `+${3000 + player.coins * 100 + timeBonus}`, "#FFD700");
       playSfx("win");
-      if (level.castle) spawnFirework(level.castle.x + 48, SCREEN_HEIGHT - 150);
+      spawnFirework(level.castle.x + 48, SCREEN_HEIGHT - 150);
       this.state = "win";
     }
 
@@ -619,8 +619,6 @@ export class Game {
         if (mush.right < cameraX - 32 || mush.left > cameraX + SCREEN_WIDTH + 32) continue;
         mush.draw(ctx, cameraX);
       }
-      // 旗帜
-      if (level.flag) level.flag.draw(ctx, cameraX);
       if (level.castle) level.castle.draw(ctx, cameraX);
       // Boss
       if (level.boss && level.boss.alive) level.boss.draw(ctx, cameraX, this.animTick);
