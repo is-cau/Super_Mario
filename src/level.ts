@@ -145,8 +145,8 @@ for (const [r, c] of coinPositions) set(r, c, "C");
 // === 敌人 ===
 // 敌人位置：避免靠近砖块结构（留至少5格间距）
 const enemyPositions: [number, number][] = [
-  [GROUND_ROW - 1, 14],
-  [GROUND_ROW - 1, 28],
+  [GROUND_ROW - 1, 10], [GROUND_ROW - 1, 14],
+  [GROUND_ROW - 1, 26], [GROUND_ROW - 1, 28],
   [GROUND_ROW - 1, 38],
   [GROUND_ROW - 1, 48],
   [GROUND_ROW - 1, 55],
@@ -199,6 +199,11 @@ set(7, 83, "H"); set(9, 119, "H"); set(8, 141, "H");
 set(GROUND_ROW - 1, 42, "T");
 set(GROUND_ROW - 1, 92, "T");
 set(GROUND_ROW - 1, 145, "T");
+
+// Boss 前金币阵 + 额外敌人
+set(10, 190, "C"); set(10, 191, "C"); set(10, 192, "C");
+set(9, 190, "C"); set(9, 192, "C");
+set(GROUND_ROW - 1, 187, "E"); set(GROUND_ROW - 1, 189, "E");
 
 // 大乌龟 Bowser Boss (col 194)
 set(GROUND_ROW - 1, 194, "K");

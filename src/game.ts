@@ -720,6 +720,7 @@ export class Game {
     }
   }
   shrinkPlayer() {
+    if (this.player.fireForm) { this.player.fireForm = false; return; }
     if (this.player.big) {
       this.player.big = false;
       const oldBottom = this.player.bottom;
