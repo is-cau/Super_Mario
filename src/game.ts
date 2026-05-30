@@ -32,6 +32,10 @@ export class Game {
   gameOverTimer: number = 0;
   winTimer: number = 0;
   flagReached: boolean = false;
+  paused: boolean = false;
+  deathAnim: number = 0;    // 死亡弹跳动画帧计数
+  deathVY: number = 0;      // 死亡弹跳速度
+  timeLeft: number = 400;   // 倒计时（秒）
 
   constructor() {
     this.canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
@@ -56,6 +60,10 @@ export class Game {
     this.gameOverTimer = 0;
     this.winTimer = 0;
     this.flagReached = false;
+    this.paused = false;
+    this.deathAnim = 0;
+    this.deathVY = 0;
+    this.timeLeft = 400;
     this.player = new Player(80, (13 - 2) * TILE); // 地面之上
     clearParticles();
     initBackground(0);
@@ -82,10 +90,14 @@ export class Game {
         this.lastTapTime = 0; this.sprinting = false; // 跳跃取消冲刺标记
       }
 
+      if (e.key === "Escape") {
+        if (this.state === "playing") this.paused = !this.paused;
+      }
+
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (this.state === "menu") { this.state = "playing"; this.resetLevel(); return; }
-        if (this.state === "playing") {
+        if (this.state === "playing" && !this.paused) {
           if (this.player.onGround) { this.player.vy = PLAYER_JUMP; this.player.jumpCount = 0; playSfx("jump"); }
           else if (this.player.jumpCount < 1) { this.player.vy = PLAYER_JUMP * 0.85; this.player.jumpCount++; playSfx("jump"); }
         }
@@ -113,6 +125,42 @@ export class Game {
     }
 
     const { player, level } = this;
+
+    // 暂停
+    if (this.paused) {
+      this.keysDown.clear();
+      return;
+    }
+
+    // 死亡弹跳动画
+    if (this.deathAnim > 0) {
+      this.deathAnim--;
+      this.deathVY -= 0.3;
+      player.y -= this.deathVY * dt;
+      if (this.deathAnim <= 0) {
+        player.lives--;
+        if (player.lives <= 0) { this.state = "gameover"; playSfx("gameover"); }
+        else {
+          player.x = Math.max(80, this.cameraX + SCREEN_WIDTH / 3);
+          player.y = (13 - 2) * TILE; player.vx = 0; player.vy = 0;
+          player.big = false; player.fireForm = false; player.starForm = false;
+          player.h = 32; player.w = 16 * PIXEL;
+          player.invincible = true; player.invincibleTimer = 180;
+        }
+      }
+      updateParticles();
+      return;
+    }
+
+    // 倒计时
+    if (this.animTick % 60 === 0 && this.timeLeft > 0) {
+      this.timeLeft--;
+      if (this.timeLeft <= 0) {
+        this.deathAnim = 30; this.deathVY = -8; playSfx("hurt");
+        return;
+      }
+    }
+
     updateParticles();
     updateBackground(this.cameraX);
 
@@ -168,16 +216,11 @@ export class Game {
       }
     }
 
-    // 掉落 — 原地复活
+    // 掉落 — 死亡弹跳动画
     if (player.top > SCREEN_HEIGHT + 50) {
-      player.lives--;
-      if (player.lives <= 0) { this.state = "gameover"; playSfx("gameover"); return; }
-      // 原地复活（从当前x的位置地面之上）
-      player.x = Math.max(80, this.cameraX + SCREEN_WIDTH / 3);
-      player.y = (13 - 2) * TILE; player.vx = 0; player.vy = 0;
-      player.big = false; player.fireForm = false; player.starForm = false;
-      player.h = 32; player.w = 16 * PIXEL;
-      player.invincible = true; player.invincibleTimer = 180;
+      if (player.lives <= 1) { this.state = "gameover"; playSfx("gameover"); return; }
+      player.y = SCREEN_HEIGHT - 100;
+      this.deathAnim = 30; this.deathVY = -8;
       playSfx("hurt");
       return;
     }
@@ -345,16 +388,12 @@ export class Game {
             player.vy = -7;
             playSfx("stomp");
           } else {
-            if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
+            if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; playSfx("hurt"); }
             else {
-              player.lives--;
-              if (player.lives <= 0) { this.state = "gameover"; playSfx("gameover"); return; }
-              player.x = Math.max(80, this.cameraX + SCREEN_WIDTH / 3);
-              player.y = (13 - 2) * TILE; player.vx = 0; player.vy = 0;
-              player.fireForm = false; player.starForm = false;
-              player.invincible = true; player.invincibleTimer = 180;
+              if (player.lives <= 1) { this.state = "gameover"; playSfx("gameover"); return; }
+              this.deathAnim = 30; this.deathVY = -8;
+              playSfx("hurt");
             }
-            playSfx("hurt");
           }
         }
       }
@@ -505,6 +544,19 @@ export class Game {
       // HUD
       this.drawHUD();
 
+      // 暂停遮罩
+      if (this.paused) {
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 40px 'Courier New', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("暂 停", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+        ctx.font = "16px 'Courier New', monospace";
+        ctx.fillStyle = "#AAA";
+        ctx.fillText("按 ESC 继续", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40);
+      }
+
       if (this.state === "win") {
         this.drawWin();
         if (this.winTimer > 20 && this.winTimer < 30) {
@@ -525,9 +577,9 @@ export class Game {
     ctx.fillText(`马力欧`, 12, 20);
     const score = String(this.player.score).padStart(6, "0");
     ctx.fillText(score, 80, 20);
-    ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}`, SCREEN_WIDTH / 2 - 30, 20);
-    ctx.fillText(`世界`, SCREEN_WIDTH / 2 + 100, 20);
-    ctx.fillText(`1-1`, SCREEN_WIDTH / 2 + 164, 20);
+    ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}`, SCREEN_WIDTH / 2 - 50, 20);
+    ctx.fillText(`⏱ ${this.timeLeft}`, SCREEN_WIDTH / 2 + 60, 20);
+    ctx.fillText(`1-1`, SCREEN_WIDTH / 2 + 156, 20);
     // 状态提示 — 右对齐显示
     ctx.textAlign = "right";
     let statusX = SCREEN_WIDTH - 12;
