@@ -33,6 +33,7 @@ export class Game {
   gameOverTimer: number = 0;
   winTimer: number = 0;
   flagReached: boolean = false;
+  victoryDance: number = 0;   // 胜利跳舞动画帧
   paused: boolean = false;
   deathAnim: number = 0;    // 死亡弹跳动画帧计数
   deathVY: number = 0;      // 死亡弹跳速度
@@ -62,6 +63,7 @@ export class Game {
     this.gameOverTimer = 0;
     this.winTimer = 0;
     this.flagReached = false;
+    this.victoryDance = 0;
     this.paused = false;
     this.deathAnim = 0;
     this.deathVY = 0;
@@ -539,17 +541,37 @@ export class Game {
       }
     }
 
-    // 碰城堡通关
+    // 碰城堡 → 胜利跳舞
     if (!this.flagReached && level.castle && player.collides(level.castle)) {
       this.flagReached = true;
+      this.victoryDance = 180; // 3秒跳舞
       player.vx = 0;
+      player.x = level.castle.x - player.w - 10;
+      player.facingRight = false;
       const timeBonus = Math.max(0, 300 - this.animTick) * 10;
       player.score += 3000 + player.coins * 100 + timeBonus;
-      spawnFloatingText(level.castle.x + 48, SCREEN_HEIGHT - 250,
-        `+${3000 + player.coins * 100 + timeBonus}`, "#FFD700");
       playSfx("win");
-      spawnFirework(level.castle.x + 48, SCREEN_HEIGHT - 150);
-      this.state = "win";
+    }
+
+    // 胜利跳舞动画
+    if (this.flagReached && this.victoryDance > 0) {
+      this.victoryDance--;
+      player.x = (level.castle?.x ?? 6400) - player.w - 10;
+      player.facingRight = false;
+      // 蹦跳
+      if (this.victoryDance % 20 < 10) {
+        player.y = (level.castle?.y ?? 0) + 96 + 32 - player.h - (this.victoryDance % 20 < 5 ? 20 : 0);
+      }
+      // 每30帧放烟花
+      if (this.victoryDance % 30 === 0 && level.castle) {
+        spawnFirework(level.castle.x + 48, SCREEN_HEIGHT - 200 - Math.random() * 100);
+        spawnFloatingText(level.castle.x + 20, SCREEN_HEIGHT - 300 + Math.random() * 50, "🎉", "#FFD700");
+      }
+      if (this.victoryDance <= 0) {
+        this.state = "win";
+        spawnFloatingText((level.castle?.x ?? 6400) + 48, SCREEN_HEIGHT - 250,
+          `+${3000 + player.coins * 100}`, "#FFD700");
+      }
     }
 
     // 相机
