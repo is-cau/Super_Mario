@@ -71,7 +71,7 @@ export class Game {
         if (this.state === "gameover" || this.state === "win") { this.state = "menu"; }
       }
       // 火球发射
-      if ((e.key === "x" || e.key === "X") && this.state === "playing" && this.player.fireForm && this.player.shootCooldown <= 0) {
+      if ((e.key === "j" || e.key === "J") && this.state === "playing" && this.player.fireForm && this.player.shootCooldown <= 0) {
         const dir = this.player.facingRight ? 1 : -1;
         this.fireballs.push(new Fireball(this.player.centerX, this.player.centerY, dir));
         this.player.shootCooldown = 15;
@@ -173,25 +173,26 @@ export class Game {
       for (const plat of level.platforms) {
         if (enemy.collides(plat)) {
           if (enemy.vy > 0) { enemy.y = plat.top - enemy.h; enemy.vy = 0; enemy.onGround = true; }
-          if (Math.abs(enemy.right - plat.left) < 4) { enemy.vx = -Math.abs(enemy.vx); enemy.x = plat.left - enemy.w; hitWall = true; }
-          if (Math.abs(enemy.left - plat.right) < 4) { enemy.vx = Math.abs(enemy.vx); enemy.x = plat.right; hitWall = true; }
+          // 碰墙自动回头
+          if (enemy.vx < 0 && Math.abs(enemy.left - plat.right) < 4) { enemy.vx = Math.abs(enemy.vx); enemy.x = plat.right; hitWall = true; }
+          if (enemy.vx > 0 && Math.abs(enemy.right - plat.left) < 4) { enemy.vx = -Math.abs(enemy.vx); enemy.x = plat.left - enemy.w; hitWall = true; }
         }
       }
-      // 悬崖边缘检测：前方没有地面时回头
+      // 悬崖边缘：前方没有地面就回头
       if (enemy.onGround && !hitWall) {
-        const aheadX = enemy.vx > 0 ? enemy.right + 2 : enemy.left - 2;
-        const belowY = enemy.bottom + 8;
-        let groundAhead = false;
+        const checkX = enemy.vx > 0 ? enemy.right : enemy.left;
+        const checkY = enemy.bottom + 4;
+        let hasGround = false;
         for (const plat of level.platforms) {
-          if (aheadX >= plat.left && aheadX <= plat.right && belowY >= plat.top && belowY <= plat.bottom) {
-            groundAhead = true; break;
+          if (checkX >= plat.left - 2 && checkX <= plat.right + 2 && Math.abs(checkY - plat.top) < 8) {
+            hasGround = true; break;
           }
         }
-        if (!groundAhead) { enemy.vx = -enemy.vx; enemy.x += enemy.vx * 2; }
+        if (!hasGround) enemy.vx = -enemy.vx;
       }
-      // 巡逻边界回退（更宽，主要防卡砖缝）
-      if (enemy.x <= enemy.patrolLeft) { enemy.vx = Math.abs(enemy.vx); enemy.x = enemy.patrolLeft + 2; }
-      if (enemy.x >= enemy.patrolRight) { enemy.vx = -Math.abs(enemy.vx); enemy.x = enemy.patrolRight - 2; }
+      // 防止跑出关卡边界
+      if (enemy.x < 16) { enemy.vx = Math.abs(enemy.vx); enemy.x = 16; }
+      if (enemy.x > (level.width || 6700) - 50) enemy.vx = -Math.abs(enemy.vx);
     }
 
     // 蘑菇
@@ -526,7 +527,7 @@ export class Game {
     if (blink) ctx.fillText("按 ENTER 开始游戏", SCREEN_WIDTH / 2, 370);
     ctx.font = "13px sans-serif";
     ctx.fillStyle = "#AAAAAA";
-    ctx.fillText("←→ 移动  空格/↑ 跳跃  X 发射火球", SCREEN_WIDTH / 2, 440);
+    ctx.fillText("←→ 移动  空格/↑ 跳跃  J 发射火球", SCREEN_WIDTH / 2, 440);
     // 画小马里奥
     const mario = new Player(SCREEN_WIDTH / 2 - 16, 310);
     mario.draw(ctx, 0, this.animTick);
