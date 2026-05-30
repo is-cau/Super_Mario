@@ -265,26 +265,27 @@ export class Game {
       for (const plat of level.platforms) {
         if (enemy.collides(plat)) {
           if (enemy.vy > 0) { enemy.y = plat.top - enemy.h; enemy.vy = 0; enemy.onGround = true; }
-          // 碰墙自动回头
-          if (enemy.vx < 0 && Math.abs(enemy.left - plat.right) < 4) { enemy.vx = Math.abs(enemy.vx); enemy.x = plat.right; hitWall = true; }
-          if (enemy.vx > 0 && Math.abs(enemy.right - plat.left) < 4) { enemy.vx = -Math.abs(enemy.vx); enemy.x = plat.left - enemy.w; hitWall = true; }
+          else {
+            // 不是从上方落下的碰撞 = 撞墙 → 回头
+            enemy.vx = -enemy.vx;
+            enemy.x += enemy.vx * 2; // 推开防止卡住
+            hitWall = true;
+          }
         }
       }
-      // 悬崖边缘：前方没有地面就回头
+      // 悬崖边缘检测
       if (enemy.onGround && !hitWall) {
-        const checkX = enemy.vx > 0 ? enemy.right : enemy.left;
-        const checkY = enemy.bottom + 4;
+        const aheadX = enemy.vx > 0 ? enemy.right + 4 : enemy.left - 4;
+        const belowY = enemy.bottom + 4;
         let hasGround = false;
         for (const plat of level.platforms) {
-          if (checkX >= plat.left - 2 && checkX <= plat.right + 2 && Math.abs(checkY - plat.top) < 8) {
+          if (aheadX >= plat.left && aheadX <= plat.right && Math.abs(belowY - plat.top) < 10) {
             hasGround = true; break;
           }
         }
         if (!hasGround) enemy.vx = -enemy.vx;
       }
-      // 防止跑出关卡边界
       if (enemy.x < 16) { enemy.vx = Math.abs(enemy.vx); enemy.x = 16; }
-      if (enemy.x > (level.width || 6700) - 50) enemy.vx = -Math.abs(enemy.vx);
     }
 
     // 乌龟更新
