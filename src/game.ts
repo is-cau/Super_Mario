@@ -42,7 +42,8 @@ export class Game {
   deathVY: number = 0;      // 死亡弹跳速度
   timeLeft: number = 400;
   titleCard: number = 0;
-  shellCombo: number = 0;   // 龟壳连击计数
+  shellCombo: number = 0;
+  stompCombo: number = 0;  // 踩怪连击（不落地递增）
 
   constructor() {
     this.canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
@@ -85,6 +86,7 @@ export class Game {
     this.timeLeft = 400;
     this.titleCard = 120;
     this.shellCombo = 0;
+    this.stompCombo = 0;
     this.player = new Player(80, (13 - 2) * TILE);
     clearParticles();
     initBackground(0);
@@ -199,7 +201,10 @@ export class Game {
     }
     player.ax += player.vx * PLAYER_FRICTION;
     player.vx += player.ax * dt;
-    player.vy += player.ay * dt;
+    // 可变跳跃高度：按住跳跃键 → 较轻重力
+    const jumpHeld = this.keysDown.has(" ") || this.keysDown.has("ArrowUp") || this.keysDown.has("w") || this.keysDown.has("W");
+    const grav = (jumpHeld && player.vy < 0) ? GRAVITY * 0.45 : GRAVITY;
+    player.vy += grav * dt;
     if (Math.abs(player.vx) < 0.1) player.vx = 0;
     const speedLimit = this.sprinting ? MAX_SPEED * 1.6 : MAX_SPEED;
     player.vx = Math.max(-speedLimit, Math.min(player.vx, speedLimit));
@@ -231,6 +236,7 @@ export class Game {
       if (player.vy > 0) {
         player.y = plat.top - player.h;
         player.vy = 0;
+        if (!player.onGround) this.stompCombo = 0; // 落地重置
         player.onGround = true;
       } else if (player.vy < 0) {
         player.y = plat.bottom;
@@ -579,15 +585,16 @@ export class Game {
           // 放宽踩怪判定：上方 + 横向重叠 25px + 纵向 40px
           const fromAbove = player.bottom - enemy.top < 40 && Math.abs(player.centerX - enemy.centerX) < 25;
           if (fromAbove) {
-            // 一次性踩死范围内所有敌人
+            this.stompCombo++;
+            const points = Math.min(100 * Math.pow(2, this.stompCombo), 8000);
             for (const e2 of level.enemies) {
               if (!e2.alive) continue;
               if (Math.abs(e2.centerX - enemy.centerX) < 50 && player.bottom - e2.top < 50) {
                 e2.alive = false;
                 e2.squishTimer = 30;
-                player.score += 500;
+                player.score += points;
                 spawnStompParticles(e2.x, e2.bottom);
-                spawnFloatingText(e2.x, e2.y, "+500", "#FFFFFF");
+                spawnFloatingText(e2.x, e2.y, `+${points}`, "#FFFFFF");
               }
             }
             player.vy = -7;
