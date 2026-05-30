@@ -1,6 +1,6 @@
-# 超级玛丽 — Super Mario Bros 🍄
+# 超级马力欧 — Super Mario Bros 🍄
 
-基于 **TypeScript + HTML5 Canvas** 的超级玛丽经典游戏复刻，纯前端项目。
+基于 **TypeScript + HTML5 Canvas** 的超级马力欧经典游戏复刻，纯前端项目。
 
 🌐 **[在线体验 →](https://is-cau.github.io/Super_Mario/)**
 
