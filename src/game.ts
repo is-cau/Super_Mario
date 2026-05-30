@@ -25,6 +25,9 @@ export class Game {
   stars: StarItem[] = [];
   pickupItems: (FireFlower | StarItem)[] = [];
   keysDown: Set<string> = new Set();
+  lastTapDir: "" | "left" | "right" = "";
+  lastTapTime: number = 0;
+  sprinting: boolean = false;
   animTick: number = 0;
   gameOverTimer: number = 0;
   winTimer: number = 0;
@@ -61,6 +64,24 @@ export class Game {
   bindInput() {
     window.addEventListener("keydown", e => {
       this.keysDown.add(e.key);
+      // 双击方向键检测 — 开启冲刺
+      const now = performance.now();
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        if (this.lastTapDir === "left" && now - this.lastTapTime < 300) {
+          this.sprinting = true;
+        } else { this.sprinting = false; }
+        this.lastTapDir = "left"; this.lastTapTime = now;
+      }
+      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        if (this.lastTapDir === "right" && now - this.lastTapTime < 300) {
+          this.sprinting = true;
+        } else { this.sprinting = false; }
+        this.lastTapDir = "right"; this.lastTapTime = now;
+      }
+      if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+        this.lastTapTime = 0; this.sprinting = false; // 跳跃取消冲刺标记
+      }
+
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (this.state === "menu") { this.state = "playing"; this.resetLevel(); return; }
@@ -110,7 +131,13 @@ export class Game {
     player.vx += player.ax * dt;
     player.vy += player.ay * dt;
     if (Math.abs(player.vx) < 0.1) player.vx = 0;
-    player.vx = Math.max(-MAX_SPEED, Math.min(player.vx, MAX_SPEED));
+    const speedLimit = this.sprinting ? MAX_SPEED * 1.6 : MAX_SPEED;
+    player.vx = Math.max(-speedLimit, Math.min(player.vx, speedLimit));
+    // 停止按方向键时取消冲刺
+    if (!this.keysDown.has("ArrowLeft") && !this.keysDown.has("a") && !this.keysDown.has("A") &&
+        !this.keysDown.has("ArrowRight") && !this.keysDown.has("d") && !this.keysDown.has("D")) {
+      this.sprinting = false;
+    }
     player.x += player.vx * dt;
     player.y += player.vy * dt;
 
@@ -506,6 +533,7 @@ export class Game {
     // 状态提示
     if (this.player.fireForm) ctx.fillText(`🔥`, SCREEN_WIDTH - 60, 20);
     if (this.player.starForm) ctx.fillText(`⭐${Math.ceil(this.player.starTimer / 60)}s`, SCREEN_WIDTH - 80, 20);
+    if (this.sprinting) { ctx.textAlign = "left"; ctx.fillStyle = "#FF0"; ctx.fillText("💨", 100, 30); }
   }
 
   drawMenu() {
@@ -527,7 +555,8 @@ export class Game {
     if (blink) ctx.fillText("按 ENTER 开始游戏", SCREEN_WIDTH / 2, 370);
     ctx.font = "13px sans-serif";
     ctx.fillStyle = "#AAAAAA";
-    ctx.fillText("←→ 移动  空格/↑ 跳跃  J 发射火球", SCREEN_WIDTH / 2, 440);
+    ctx.fillText("←→ 移动  空格/↑ 跳跃  J 火球", SCREEN_WIDTH / 2, 420);
+    ctx.fillText("双击 ←→ 冲刺加速", SCREEN_WIDTH / 2, 443);
     // 画小马里奥
     const mario = new Player(SCREEN_WIDTH / 2 - 16, 310);
     mario.draw(ctx, 0, this.animTick);
