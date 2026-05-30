@@ -187,17 +187,17 @@ set(GROUND_ROW - 4, 115, "S"); set(GROUND_ROW - 3, 116, "S"); set(GROUND_ROW - 2
 set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3, 154, "S");
 
 // === 终点旗帜 ===
-// 终点旗帜 (col 198)
-set(GROUND_ROW - 1, 198, "F");
-set(GROUND_ROW, 198, "G"); set(GROUND_ROW, 199, "G");
+// 终点旗帜 (col 194，与城堡拉开距离)
+set(GROUND_ROW - 1, 194, "F");
+set(GROUND_ROW, 194, "G"); set(GROUND_ROW, 195, "G");
 
-// 城堡 (col 202-204，坐在地面上)
-set(GROUND_ROW - 4, 202, "c"); set(GROUND_ROW - 4, 203, "c");
-set(GROUND_ROW - 3, 202, "c"); set(GROUND_ROW - 3, 203, "c");
-set(GROUND_ROW - 2, 202, "c"); set(GROUND_ROW - 2, 203, "c");
-set(GROUND_ROW - 1, 202, "c"); set(GROUND_ROW - 1, 203, "c");
+// 城堡 (col 203-204，坐在地面上)
+set(GROUND_ROW - 4, 203, "c"); set(GROUND_ROW - 4, 204, "c");
+set(GROUND_ROW - 3, 203, "c"); set(GROUND_ROW - 3, 204, "c");
+set(GROUND_ROW - 2, 203, "c"); set(GROUND_ROW - 2, 204, "c");
+set(GROUND_ROW - 1, 203, "c"); set(GROUND_ROW - 1, 204, "c");
 // 城堡下地面
-for (let c = 202; c < 206; c++) {
+for (let c = 203; c < 207; c++) {
   for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "G");
 }
 
