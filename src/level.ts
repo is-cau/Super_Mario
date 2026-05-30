@@ -190,11 +190,11 @@ set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3
 // 大乌龟 Bowser Boss (col 194)
 set(GROUND_ROW - 1, 194, "K");
 
-// 终点旗帜 (col 198，Boss之后)
-set(GROUND_ROW - 1, 198, "F");
-set(GROUND_ROW, 198, "G"); set(GROUND_ROW, 199, "G");
+// 终点旗帜+城堡 (col 199-201，紧挨)
+set(GROUND_ROW - 1, 199, "F");
+set(GROUND_ROW, 199, "G");
 
-// 城堡 (col 200-201，旗杆之后)
+// 城堡 (col 200-201)
 set(GROUND_ROW - 4, 200, "c"); set(GROUND_ROW - 4, 201, "c");
 set(GROUND_ROW - 3, 200, "c"); set(GROUND_ROW - 3, 201, "c");
 set(GROUND_ROW - 2, 200, "c"); set(GROUND_ROW - 2, 201, "c");
