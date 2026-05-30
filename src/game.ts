@@ -6,7 +6,7 @@ import {
   SCREEN_WIDTH, SCREEN_HEIGHT, GRAVITY, PLAYER_ACC, PLAYER_FRICTION,
   PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, SFX_ENABLED, GameState,
 } from "./settings";
-import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, setSpriteCache } from "./sprites";
+import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
 import { buildLevel, LevelData } from "./level";
 import { initCache } from "./assets";
 import { initBackground, updateBackground, drawBackground } from "./background";
@@ -21,6 +21,9 @@ export class Game {
   player!: Player;
   level!: LevelData;
   mushrooms: Mushroom[] = [];
+  fireballs: Fireball[] = [];
+  stars: StarItem[] = [];
+  pickupItems: (FireFlower | StarItem)[] = [];
   keysDown: Set<string> = new Set();
   animTick: number = 0;
   gameOverTimer: number = 0;
@@ -42,6 +45,9 @@ export class Game {
   resetLevel() {
     this.level = buildLevel();
     this.mushrooms = [];
+    this.fireballs = [];
+    this.stars = [];
+    this.pickupItems = [];
     this.cameraX = 0;
     this.animTick = 0;
     this.gameOverTimer = 0;
@@ -58,8 +64,18 @@ export class Game {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (this.state === "menu") { this.state = "playing"; this.resetLevel(); return; }
-        if (this.state === "playing" && this.player.onGround) { this.player.vy = PLAYER_JUMP; playSfx("jump"); }
+        if (this.state === "playing") {
+          if (this.player.onGround) { this.player.vy = PLAYER_JUMP; this.player.jumpCount = 0; playSfx("jump"); }
+          else if (this.player.jumpCount < 1) { this.player.vy = PLAYER_JUMP * 0.85; this.player.jumpCount++; playSfx("jump"); }
+        }
         if (this.state === "gameover" || this.state === "win") { this.state = "menu"; }
+      }
+      // 火球发射
+      if ((e.key === "x" || e.key === "X") && this.state === "playing" && this.player.fireForm && this.player.shootCooldown <= 0) {
+        const dir = this.player.facingRight ? 1 : -1;
+        this.fireballs.push(new Fireball(this.player.centerX, this.player.centerY, dir));
+        this.player.shootCooldown = 15;
+        playSfx("coin");
       }
     });
     window.addEventListener("keyup", e => this.keysDown.delete(e.key));
@@ -125,19 +141,26 @@ export class Game {
       }
     }
 
-    // 掉落
+    // 掉落 — 原地复活
     if (player.top > SCREEN_HEIGHT + 50) {
       player.lives--;
       if (player.lives <= 0) { this.state = "gameover"; playSfx("gameover"); return; }
-      player.x = 80; player.y = (13 - 2) * TILE; player.vx = 0; player.vy = 0;
-      player.big = false; player.h = 32; player.w = 16 * PIXEL;
-      player.invincible = true; player.invincibleTimer = 120;
+      // 原地复活（从当前x的位置地面之上）
+      player.x = Math.max(80, this.cameraX + SCREEN_WIDTH / 3);
+      player.y = (13 - 2) * TILE; player.vx = 0; player.vy = 0;
+      player.big = false; player.fireForm = false; player.starForm = false;
+      player.h = 32; player.w = 16 * PIXEL;
+      player.invincible = true; player.invincibleTimer = 180;
       playSfx("hurt");
       return;
     }
 
     // 无敌
     if (player.invincible) { player.invincibleTimer--; if (player.invincibleTimer <= 0) player.invincible = false; }
+    // 无敌星计时
+    if (player.starForm) { player.starTimer--; if (player.starTimer <= 0) player.starForm = false; }
+    // 火球冷却
+    if (player.shootCooldown > 0) player.shootCooldown--;
 
     // 敌人
     for (const enemy of level.enemies) {
@@ -171,6 +194,47 @@ export class Game {
       if (mush.top > SCREEN_HEIGHT) mush.collected = true;
     }
 
+    // 火球更新
+    for (const fb of this.fireballs) {
+      if (!fb.alive) continue;
+      fb.vy += GRAVITY * 0.3 * dt;
+      fb.x += fb.vx * dt;
+      fb.y += fb.vy * dt;
+      if (fb.x < this.cameraX - 50 || fb.x > this.cameraX + SCREEN_WIDTH + 50 || fb.y > SCREEN_HEIGHT) fb.alive = false;
+      // 火球 vs 敌人
+      for (const enemy of level.enemies) {
+        if (!enemy.alive) continue;
+        if (fb.collides(enemy)) { fb.alive = false; enemy.alive = false; enemy.squishTimer = 20; playSfx("stomp"); }
+      }
+    }
+    // 无敌星更新
+    for (const st of this.stars) {
+      if (st.collected) continue;
+      st.vy += GRAVITY * dt;
+      st.x += st.vx * dt;
+      st.y += st.vy * dt;
+      for (const plat of level.platforms) {
+        if (st.collides(plat)) {
+          if (st.vy > 0) { st.y = plat.top - st.h; st.vy = -8; } else { st.vy = Math.abs(st.vy); }
+          if (Math.abs(st.right - plat.left) < 4 || Math.abs(st.left - plat.right) < 4) st.vx = -st.vx;
+        }
+      }
+      if (st.top > SCREEN_HEIGHT) st.collected = true;
+    }
+    // 火焰花/星星道具更新
+    for (const item of this.pickupItems) {
+      if (item.collected) continue;
+      (item as any).vy = ((item as any).vy || 0) + GRAVITY * 0.5 * dt;
+      item.x += (item.vx || 0) * dt;
+      item.y += (item.vy || 0) * dt;
+      for (const plat of level.platforms) {
+        if (item.collides(plat)) {
+          if ((item.vy || 0) > 0) { item.y = plat.top - item.h; item.vy = 0; }
+        }
+      }
+      if (item.top > SCREEN_HEIGHT) item.collected = true;
+    }
+
     // 金币
     for (const coin of level.coins) {
       if (!coin.collected && player.collides(coin)) {
@@ -188,7 +252,29 @@ export class Game {
         mush.collected = true;
         player.score += 500;
         if (!player.big) { this.growPlayer(); playSfx("powerup"); }
-        spawnFloatingText(mush.x, mush.y, "1UP", "#00FF00");
+        else { player.fireForm = true; playSfx("powerup"); }
+        spawnFloatingText(mush.x, mush.y, "巨大化", "#00FF00");
+      }
+    }
+    // 无敌星收集
+    for (const st of this.stars) {
+      if (!st.collected && player.collides(st)) {
+        st.collected = true;
+        player.score += 1000;
+        player.starForm = true; player.starTimer = 600;
+        playSfx("powerup");
+        spawnFloatingText(st.x, st.y, "☆无敌☆", "#FFD700");
+      }
+    }
+    // 火焰花收集
+    for (const item of this.pickupItems) {
+      if (!item.collected && player.collides(item)) {
+        item.collected = true;
+        player.score += 1000;
+        player.fireForm = true;
+        if (!player.big) this.growPlayer();
+        playSfx("powerup");
+        spawnFloatingText(item.x, item.y, "火焰花", "#FF8800");
       }
     }
 
@@ -197,6 +283,7 @@ export class Game {
       for (const enemy of level.enemies) {
         if (!enemy.alive) continue;
         if (player.collides(enemy)) {
+          if (player.starForm) { enemy.alive = false; enemy.squishTimer = 20; player.score += 500; playSfx("stomp"); continue; }
           if (player.vy > 0 && player.bottom - enemy.top < 20) {
             enemy.alive = false;
             enemy.squishTimer = 30;
@@ -210,8 +297,10 @@ export class Game {
             else {
               player.lives--;
               if (player.lives <= 0) { this.state = "gameover"; playSfx("gameover"); return; }
-              player.x = 80; player.y = (13 - 2) * TILE; player.vx = 0; player.vy = 0;
-              player.invincible = true; player.invincibleTimer = 120;
+              player.x = Math.max(80, this.cameraX + SCREEN_WIDTH / 3);
+              player.y = (13 - 2) * TILE; player.vx = 0; player.vy = 0;
+              player.fireForm = false; player.starForm = false;
+              player.invincible = true; player.invincibleTimer = 180;
             }
             playSfx("hurt");
           }
@@ -224,22 +313,26 @@ export class Game {
       if (!qb.used && player.vy < 0 && Math.abs(player.top - qb.bottom) < 12 && Math.abs(player.centerX - qb.centerX) < 20) {
         qb.used = true;
         player.vy = 0;
-        if (qb.coin) {
-          player.coins++;
-          player.score += 200;
-          playSfx("coin");
-          spawnCoinPop(qb.x, qb.y - 16);
+        const r = Math.random();
+        if (r < 0.3) {
+          player.coins++; player.score += 200; playSfx("coin");
+          spawnCoinPop(qb.x, qb.y + 10);
           spawnFloatingText(qb.x, qb.y, "+200", "#FFD700");
-        } else {
+        } else if (r < 0.6) {
+          player.score += 100; playSfx("mushroom");
+          if (this.mushrooms.length < 4) this.mushrooms.push(new Mushroom(qb.left, qb.top - 32));
+          spawnFloatingText(qb.x, qb.y, "蘑菇", "#00FF00");
+        } else if (r < 0.85) {
           player.score += 100;
-          playSfx("mushroom");
-          if (this.mushrooms.length < 4) {
-            const m = new Mushroom(qb.left, qb.top - 32);
-            this.mushrooms.push(m);
-            spawnFloatingText(qb.x, qb.y, "MUSH", "#00FF00");
-          } else {
-            spawnFloatingText(qb.x, qb.y, "+100", "#FFD700");
+          if (this.pickupItems.length < 3) {
+            const ff = new FireFlower(qb.left, qb.top - 32);
+            (ff as any).vy = -4; this.pickupItems.push(ff);
           }
+          spawnFloatingText(qb.x, qb.y, "火焰花", "#FF8800");
+        } else {
+          player.score += 200;
+          if (this.stars.length < 2) this.stars.push(new StarItem(qb.left, qb.top - 32));
+          spawnFloatingText(qb.x, qb.y, "☆", "#FFD700");
         }
       }
     }
@@ -342,6 +435,10 @@ export class Game {
       // 旗帜
       if (level.flag) level.flag.draw(ctx, cameraX);
 
+      // 火球 星星 道具
+      for (const fb of this.fireballs) fb.draw(ctx, cameraX);
+      for (const st of this.stars) st.draw(ctx, cameraX);
+      for (const p of this.pickupItems) p.draw(ctx, cameraX);
       // 粒子
       drawParticles(ctx, cameraX);
 
@@ -370,14 +467,17 @@ export class Game {
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "bold 14px 'Courier New', monospace";
     ctx.textAlign = "left";
-    ctx.fillText(`MARIO`, 12, 20);
+    ctx.fillText(`马力欧`, 12, 20);
     const score = String(this.player.score).padStart(6, "0");
     ctx.fillText(score, 80, 20);
     ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}`, SCREEN_WIDTH / 2 - 30, 20);
-    ctx.fillText(`WORLD`, SCREEN_WIDTH / 2 + 100, 20);
+    ctx.fillText(`世界`, SCREEN_WIDTH / 2 + 100, 20);
     ctx.fillText(`1-1`, SCREEN_WIDTH / 2 + 164, 20);
     ctx.textAlign = "right";
-    ctx.fillText(`LIVES: ${this.player.lives}`, SCREEN_WIDTH - 12, 20);
+    ctx.fillText(`生命: ${this.player.lives}`, SCREEN_WIDTH - 12, 20);
+    // 状态提示
+    if (this.player.fireForm) ctx.fillText(`🔥`, SCREEN_WIDTH - 60, 20);
+    if (this.player.starForm) ctx.fillText(`⭐${Math.ceil(this.player.starTimer / 60)}s`, SCREEN_WIDTH - 80, 20);
   }
 
   drawMenu() {
@@ -385,21 +485,21 @@ export class Game {
     ctx.textAlign = "center";
     ctx.fillStyle = "#E80000";
     ctx.font = "bold 40px 'Courier New', monospace";
-    ctx.fillText("SUPER  MARIO", SCREEN_WIDTH / 2 + 1, 201);
+    ctx.fillText("超级马力欧", SCREEN_WIDTH / 2 + 1, 201);
     ctx.fillStyle = "#FF8C00";
     ctx.font = "bold 40px 'Courier New', monospace";
-    ctx.fillText("SUPER  MARIO", SCREEN_WIDTH / 2, 200);
+    ctx.fillText("超级马力欧", SCREEN_WIDTH / 2, 200);
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "20px 'Courier New', monospace";
-    ctx.fillText("BROS.", SCREEN_WIDTH / 2, 235);
+    ctx.fillText("兄弟", SCREEN_WIDTH / 2, 235);
     ctx.font = "14px 'Courier New', monospace";
-    ctx.fillText("© 1985 NINTENDO — HTML5 REMAKE", SCREEN_WIDTH / 2, 280);
+    ctx.fillText("© 1985 Nintendo — HTML5 复刻", SCREEN_WIDTH / 2, 280);
     ctx.font = "18px 'Courier New', monospace";
     const blink = Math.sin(this.animTick * 0.1) > 0;
-    if (blink) ctx.fillText("PRESS ENTER TO START", SCREEN_WIDTH / 2, 370);
+    if (blink) ctx.fillText("按 ENTER 开始游戏", SCREEN_WIDTH / 2, 370);
     ctx.font = "13px sans-serif";
     ctx.fillStyle = "#AAAAAA";
-    ctx.fillText("← → 移动    SPACE 跳跃", SCREEN_WIDTH / 2, 420);
+    ctx.fillText("←→ 移动  空格/↑ 跳跃  X 发射火球", SCREEN_WIDTH / 2, 440);
     // 画小马里奥
     const mario = new Player(SCREEN_WIDTH / 2 - 16, 310);
     mario.draw(ctx, 0, this.animTick);
@@ -412,12 +512,12 @@ export class Game {
     ctx.textAlign = "center";
     ctx.fillStyle = "#E80000";
     ctx.font = "bold 40px 'Courier New', monospace";
-    ctx.fillText("GAME  OVER", SCREEN_WIDTH / 2, 220);
+    ctx.fillText("游戏结束", SCREEN_WIDTH / 2, 220);
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "18px 'Courier New', monospace";
-    ctx.fillText(`FINAL SCORE: ${this.player.score}`, SCREEN_WIDTH / 2, 300);
+    ctx.fillText(`最终得分: ${this.player.score}`, SCREEN_WIDTH / 2, 300);
     const blink = Math.sin(this.animTick * 0.1) > 0;
-    if (blink) ctx.fillText("PRESS ENTER TO CONTINUE", SCREEN_WIDTH / 2, 400);
+    if (blink) ctx.fillText("按 ENTER 继续", SCREEN_WIDTH / 2, 400);
   }
 
   drawWin() {
@@ -427,12 +527,12 @@ export class Game {
     ctx.textAlign = "center";
     ctx.fillStyle = "#FFD700";
     ctx.font = "bold 28px 'Courier New', monospace";
-    ctx.fillText("THANK YOU MARIO!", SCREEN_WIDTH / 2, 180);
+    ctx.fillText("谢谢你 马力欧!", SCREEN_WIDTH / 2, 180);
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "18px 'Courier New', monospace";
-    ctx.fillText(`FINAL SCORE: ${this.player.score}`, SCREEN_WIDTH / 2, 220);
-    ctx.fillText(`COINS: ${this.player.coins}`, SCREEN_WIDTH / 2, 250);
+    ctx.fillText(`最终得分: ${this.player.score}`, SCREEN_WIDTH / 2, 220);
+    ctx.fillText(`金币: ${this.player.coins}`, SCREEN_WIDTH / 2, 250);
     const blink = Math.sin(this.animTick * 0.1) > 0;
-    if (blink) ctx.fillText("PRESS ENTER TO CONTINUE", SCREEN_WIDTH / 2, 300);
+    if (blink) ctx.fillText("按 ENTER 继续", SCREEN_WIDTH / 2, 300);
   }
 }

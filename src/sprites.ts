@@ -332,6 +332,61 @@ export const POLE_BALL: number[][] = [
   [0,0,70,70,70,70,0,0],
 ];
 
+/** 火焰花 16x16 */
+export const FIREFLOWER: number[][] = [
+  [0,0,0,0,1,1,0,0,0,0,0,1,1,0,0,0],
+  [0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0],
+  [0,0,1,1,2,2,1,1,1,1,1,2,2,1,1,0],
+  [0,1,1,2,2,3,2,1,1,2,2,3,2,2,1,1],
+  [0,1,2,2,3,3,3,2,2,2,3,3,3,2,1,0],
+  [1,1,2,3,3,3,3,3,3,3,3,3,3,2,1,1],
+  [1,1,1,2,3,3,3,4,4,3,3,3,2,1,1,0],
+  [1,1,1,1,2,3,4,4,4,4,3,2,1,1,1,0],
+  [0,1,1,1,1,2,4,4,4,4,2,1,1,1,0,0],
+  [0,0,1,1,1,1,2,2,2,2,1,1,1,1,0,0],
+  [0,0,0,0,5,5,5,5,5,5,5,5,0,0,0,0],
+  [0,0,0,5,5,5,5,5,5,5,5,5,5,0,0,0],
+  [0,0,5,5,5,5,5,5,5,5,5,5,5,5,0,0],
+  [0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0],
+  [0,5,5,5,0,0,5,5,5,5,0,0,5,5,5,0],
+  [0,0,5,0,0,0,0,5,5,0,0,0,0,5,0,0],
+];
+// 颜色：1=橙红 2=黄色 3=亮橙 4=白色 5=绿色
+
+/** 星星 16x16 */
+export const STAR: number[][] = [
+  [0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+  [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+  [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+  [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,1,1,1,2,2,2,2,1,1,1,0,0,0],
+  [0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0],
+  [0,0,1,1,1,2,2,2,2,2,2,1,1,1,0,0],
+  [0,0,1,1,0,1,2,2,2,2,1,0,1,1,0,0],
+  [0,0,1,0,0,0,1,1,1,1,0,0,0,1,0,0],
+  [0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0],
+  [1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1],
+  [0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0],
+  [0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0],
+];
+// 1=金色 2=暗金色(眼睛)
+
+/** 火球 8x8 */
+export const FIREBALL: number[][] = [
+  [0,1,1,1,1,0,0,0],
+  [1,2,2,2,2,1,0,0],
+  [1,2,3,3,2,2,1,0],
+  [1,2,3,3,3,2,1,0],
+  [0,1,2,3,3,2,1,0],
+  [0,0,1,2,2,2,1,0],
+  [0,0,0,1,1,1,0,0],
+  [0,0,0,0,0,0,0,0],
+];
+// 1=红 2=橙 3=黄
+
 import { COLORS, TILE, GRAVITY } from "./settings";
 
 // 缓存引用（由 game.ts 在初始化时设置）
@@ -397,6 +452,15 @@ export class Player extends Sprite {
   animTimer: number = 0;
   /** 用于旗杆滑下动画 */
   flagSliding: boolean = false;
+  /** 二段跳计数 */
+  jumpCount: number = 0;
+  /** 火焰形态 */
+  fireForm: boolean = false;
+  /** 无敌星形态 */
+  starForm: boolean = false;
+  starTimer: number = 0;
+  /** 火球冷却 */
+  shootCooldown: number = 0;
 
   constructor(x: number, y: number) {
     super(x, y, 32, 32);
@@ -556,6 +620,52 @@ export class Mushroom extends Sprite {
 }
 
 // ==================== 栗子仔 ====================
+
+// ==================== 火焰花 ====================
+
+export class FireFlower extends Sprite {
+  collected: boolean = false;
+  constructor(x: number, y: number) { super(x, y, 30, 30); }
+  draw(ctx: CanvasRenderingContext2D, cameraX: number) {
+    if (this.collected) return;
+    const sx = this.x - cameraX;
+    drawSprite(ctx, FIREFLOWER, sx, this.y, 1.875);
+  }
+}
+
+// ==================== 无敌星 ====================
+
+export class Star extends Sprite {
+  collected: boolean = false;
+  bounced: boolean = false;
+  constructor(x: number, y: number) { super(x, y, 30, 30); this.vx = 2; this.vy = -6; }
+  draw(ctx: CanvasRenderingContext2D, cameraX: number) {
+    if (this.collected) return;
+    const sx = this.x - cameraX;
+    drawSprite(ctx, STAR, sx, this.y, 1.875);
+  }
+}
+
+// ==================== 火球 ====================
+
+export class Fireball extends Sprite {
+  alive: boolean = true;
+  constructor(x: number, y: number, dir: number) {
+    super(x, y, 14, 14);
+    this.vx = dir * 6;
+    this.vy = -2;
+  }
+  draw(ctx: CanvasRenderingContext2D, cameraX: number) {
+    if (!this.alive) return;
+    const sx = this.x - cameraX;
+    ctx.fillStyle = "#FF4400";
+    ctx.beginPath(); ctx.arc(sx + 7, this.y + 7, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#FFAA00";
+    ctx.beginPath(); ctx.arc(sx + 5, this.y + 5, 3, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// ==================== 栗子仔
 
 export class Goomba extends Sprite {
   alive: boolean = true;
