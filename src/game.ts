@@ -716,7 +716,7 @@ export class Game {
       const oldBottom = this.player.bottom;
       this.player.h = 32 * PIXEL;
       this.player.y = oldBottom - 32 * PIXEL;
-      this.player.w = 16 * PIXEL;
+      this.player.w = 20 * PIXEL;
     }
   }
   shrinkPlayer() {
