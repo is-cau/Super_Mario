@@ -712,7 +712,8 @@ export class Goomba extends Sprite {
 
 export class Flag extends Sprite {
   constructor(x: number, y: number) {
-    super(x, y, 10, 200);
+    super(x, y, 24, 200);
+    // 向左偏移让实际旗杆在视觉中央
   }
 
   draw(ctx: CanvasRenderingContext2D, cameraX: number, _tick?: number) {

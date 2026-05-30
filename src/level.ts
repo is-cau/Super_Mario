@@ -176,8 +176,13 @@ set(GROUND_ROW - 1, 204, "c"); set(GROUND_ROW - 1, 205, "c");
 for (let c = 204; c < 208; c++) {
   for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "G");
 }
-// 终点旗帜 (col 202)
+// 终点旗帜 (col 202，放在地面同一行确保碰撞)
 set(GROUND_ROW - 1, 202, "F");
+// 把旗子的碰撞体扩大（修改 Flag 的 y 让它从更低位置开始）
+// 实际上 Flag 的 y 在构建时由 row*TILE 决定，这里 GR12 没问题
+// 补一个标记确保地面在旗帜下面
+set(GROUND_ROW, 202, "G");
+set(GROUND_ROW, 203, "G");
 
 // 确保每行都有足够长度
 for (let r = 0; r < ROWS; r++) {
