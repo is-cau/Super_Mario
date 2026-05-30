@@ -40,8 +40,9 @@ export class Game {
   paused: boolean = false;
   deathAnim: number = 0;    // 死亡弹跳动画帧计数
   deathVY: number = 0;      // 死亡弹跳速度
-  timeLeft: number = 400;   // 倒计时（秒）
-  titleCard: number = 0;    // 标题卡显示帧
+  timeLeft: number = 400;
+  titleCard: number = 0;
+  shellCombo: number = 0;   // 龟壳连击计数
 
   constructor() {
     this.canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
@@ -82,8 +83,9 @@ export class Game {
     this.deathAnim = 0;
     this.deathVY = 0;
     this.timeLeft = 400;
-    this.titleCard = 120; // 2秒标题卡
-    this.player = new Player(80, (13 - 2) * TILE); // 地面之上
+    this.titleCard = 120;
+    this.shellCombo = 0;
+    this.player = new Player(80, (13 - 2) * TILE);
     clearParticles();
     initBackground(0);
   }
@@ -137,12 +139,12 @@ export class Game {
 
   update(dt: number = 1) {
     this.animTick++;
-    if (this.titleCard > 0) { this.titleCard--; return; }
     if (this.state !== "playing") {
       if (this.state === "gameover") this.gameOverTimer++;
       if (this.state === "win") this.winTimer++;
       return;
     }
+    if (this.titleCard > 0) return; // 标题卡冻结游戏
 
     const { player, level } = this;
 
@@ -286,7 +288,6 @@ export class Game {
     }
 
     // 乌龟更新
-    let shellCombo = 0;
     for (const k of this.koopas) {
       if (!k.alive && k.inShell && !k.shellMoving) continue;
       k.updateAnim();
@@ -307,11 +308,11 @@ export class Game {
       if (k.inShell && k.shellMoving && Math.abs(k.vx) > 2) {
         for (const e of level.enemies) {
           if (!e.alive) continue;
-          if (k.collides(e)) { e.alive = false; e.squishTimer = 20; shellCombo++; player.score += 100 * Math.pow(2, shellCombo); spawnFloatingText(e.x, e.y, `+${100 * Math.pow(2, shellCombo)}`, "#FFF"); playSfx("stomp"); }
+          if (k.collides(e)) { e.alive = false; e.squishTimer = 20; this.shellCombo++; player.score += 100 * Math.pow(2, this.shellCombo); spawnFloatingText(e.x, e.y, `+${100 * Math.pow(2, this.shellCombo)}`, "#FFF"); playSfx("stomp"); }
         }
         for (const k2 of this.koopas) {
           if (k2 === k || !k2.alive) continue;
-          if (k.collides(k2)) { k2.alive = false; k2.inShell = false; shellCombo++; player.score += 100 * Math.pow(2, shellCombo); playSfx("stomp"); }
+          if (k.collides(k2)) { k2.alive = false; k2.inShell = false; this.shellCombo++; player.score += 100 * Math.pow(2, this.shellCombo); playSfx("stomp"); }
         }
       }
     }
@@ -563,11 +564,8 @@ export class Game {
     for (const item of this.pickupItems) {
       if (!item.collected && player.collides(item)) {
         item.collected = true;
-        player.score += 1000;
-        player.fireForm = true;
-        if (!player.big) this.growPlayer();
-        playSfx("powerup");
-        spawnFloatingText(item.x, item.y, "火焰花", "#FF8800");
+        if (player.fireForm) { player.score += 500; spawnFloatingText(item.x, item.y, "+500", "#FF8800"); }
+        else { player.score += 1000; player.fireForm = true; if (!player.big) this.growPlayer(); spawnFloatingText(item.x, item.y, "火焰花", "#FF8800"); playSfx("powerup"); }
       }
     }
 
