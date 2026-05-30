@@ -525,6 +525,12 @@ export class Game {
         coin.collected = true;
         player.coins++;
         player.score += 200;
+        // 100 金币 = 1UP
+        if (player.coins % 100 === 0) {
+          player.lives++;
+          spawnFloatingText(coin.x, coin.y, "1UP!", "#00FF00");
+          playSfx("powerup");
+        }
         playSfx("coin");
         spawnFloatingText(coin.x, coin.y, "+200", "#FFD700");
       }
@@ -824,6 +830,9 @@ export class Game {
     ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}`, SCREEN_WIDTH / 2 - 50, 20);
     if (this.timeLeft <= 100 && this.animTick % 30 < 15) {
       ctx.fillStyle = "#FF0000"; ctx.font = "bold 16px 'Courier New', monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("HURRY!", SCREEN_WIDTH / 2 + 150, 20);
+      ctx.textAlign = "left";
     } else {
       ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 14px 'Courier New', monospace";
     }
