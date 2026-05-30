@@ -231,7 +231,7 @@ export function buildLevel(): LevelData {
           coins.push(new Coin(x + 6, y + 6));
           break;
         case "E":
-          enemies.push(new Goomba(x, y, x - TILE * 2, x + TILE * 2));
+          enemies.push(new Goomba(x, y, x - TILE * 4, x + TILE * 4));
           break;
         case "c":
           if (castleX === 0) { castleX = x; castleY = y - TILE * 3; }
