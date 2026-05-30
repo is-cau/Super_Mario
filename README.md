@@ -54,6 +54,10 @@ Super_Mario/
 └── vite.config.ts       # Vite 配置
 ```
 
+## ⚠️ 免责声明
+
+本项目仅供编程技术学习与交流，**非商业用途**。超级马力欧角色及游戏设计版权归任天堂（Nintendo）所有。
+
 ## 📝 License
 
 MIT

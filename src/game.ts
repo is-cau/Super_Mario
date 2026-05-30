@@ -919,7 +919,10 @@ export class Game {
     ctx.font = "20px 'Courier New', monospace";
     ctx.fillText("兄弟", SCREEN_WIDTH / 2, 235);
     ctx.font = "14px 'Courier New', monospace";
-    ctx.fillText("© 1985 Nintendo — HTML5 复刻", SCREEN_WIDTH / 2, 280);
+    ctx.fillText("© 1985 Nintendo — HTML5 技术练习", SCREEN_WIDTH / 2, 270);
+    ctx.font = "11px sans-serif";
+    ctx.fillStyle = "#666";
+    ctx.fillText("仅供编程技术学习与交流，非商业用途", SCREEN_WIDTH / 2, 296);
     ctx.font = "18px 'Courier New', monospace";
     const blink = Math.sin(this.animTick * 0.1) > 0;
     if (blink) ctx.fillText("按 ENTER 开始游戏", SCREEN_WIDTH / 2, 370);
