@@ -393,7 +393,10 @@ export class Game {
     }
     // Boss 更新
     const boss = level.boss;
-    if (boss && boss.alive && player.x > boss.x - 400) {
+    if (boss && (boss.alive || boss.y < SCREEN_HEIGHT + 100) && player.x > boss.x - 400) {
+      // 死亡掉下动画
+      if (!boss.alive) { boss.y += 4; if (boss.y > SCREEN_HEIGHT + 200) { boss.y = -999; } }
+      else {
       boss.updateAnim();
       // Boss 移动
       boss.vy += GRAVITY * dt;
@@ -463,6 +466,22 @@ export class Game {
           boss.invincibleTimer = 30;
           playSfx("stomp");
           spawnFloatingText(boss.x + 20, boss.y, boss.hp > 0 ? "-1" : "KO!", "#FF0");
+          if (boss.hp <= 0) {
+            boss.alive = false;
+            player.score += 5000;
+            spawnFirework(boss.centerX, boss.y);
+          }
+        }
+      }
+      } // close boss alive else
+      // 龟壳撞击 Boss
+      for (const k of this.koopas) {
+        if (!boss.alive || boss.invincibleTimer > 0) break;
+        if (k.inShell && k.shellMoving && Math.abs(k.vx) > 2 && k.collides(boss)) {
+          boss.hp--;
+          boss.invincibleTimer = 30;
+          k.vx = -k.vx;
+          playSfx("stomp");
           if (boss.hp <= 0) {
             boss.alive = false;
             player.score += 5000;
@@ -748,6 +767,7 @@ export class Game {
       if (level.castle) level.castle.draw(ctx, cameraX);
       // Boss
       if (level.boss && level.boss.alive) level.boss.draw(ctx, cameraX, this.animTick);
+      if (level.boss && !level.boss.alive && level.boss.y < SCREEN_HEIGHT) level.boss.draw(ctx, cameraX, this.animTick);
       for (const bf of this.bossFires) bf.draw(ctx, cameraX);
 
       // 火球 星星 道具
