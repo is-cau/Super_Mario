@@ -96,3 +96,60 @@ export function playSfx(name: SfxType): void {
       break;
   }
 }
+
+// ============ 背景音乐 ============
+
+let bgmOsc: OscillatorNode | null = null;
+let bgmGain: GainNode | null = null;
+let bgmPlaying = false;
+
+// SMB 主题旋律简版
+const melodyNotes = [
+  659,659,0,659,0,523,659,0,784,0,0,0,392,0,0,0,
+  523,0,0,392,0,0,330,0,0,440,0,494,466,440,0,
+  392,659,784,880,0,698,784,0,659,0,523,587,494,0,0,
+];
+const melodyTimes = [
+  0.12,0.12,0.12,0.12,0.12,0.12,0.12,0.12,0.24,0.24,0.12,0.12,0.24,0.12,0.12,0.12,
+  0.24,0.12,0.12,0.24,0.12,0.12,0.24,0.12,0.12,0.12,0.12,0.12,0.12,0.24,0.12,
+  0.12,0.12,0.12,0.12,0.12,0.12,0.12,0.12,0.24,0.12,0.12,0.12,0.12,0.24,0.12,
+];
+
+export function startBgm() {
+  if (bgmPlaying || !SFX_ENABLED) return;
+  try {
+    const c = new AudioContext();
+    bgmGain = c.createGain();
+    bgmGain.gain.value = 0.04;
+    bgmGain.connect(c.destination);
+    let idx = 0;
+    function playNote() {
+      if (!bgmPlaying) return;
+      if (idx >= melodyNotes.length) idx = 0;
+      const freq = melodyNotes[idx];
+      const dur = melodyTimes[idx];
+      if (freq > 0) {
+        const osc = c.createOscillator();
+        osc.type = "square";
+        osc.frequency.value = freq;
+        const g = c.createGain();
+        g.gain.setValueAtTime(0.04, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+        osc.connect(g);
+        g.connect(bgmGain!);
+        osc.start(c.currentTime);
+        osc.stop(c.currentTime + dur);
+      }
+      idx++;
+      setTimeout(playNote, dur * 1000);
+    }
+    bgmPlaying = true;
+    playNote();
+  } catch {}
+}
+
+export function stopBgm() {
+  bgmPlaying = false;
+  if (bgmGain) { try { bgmGain.disconnect(); } catch {} }
+}
+

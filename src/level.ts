@@ -27,7 +27,7 @@ import {
 
 const ROWS = 17;
 const COLS = 210;
-const GROUND_ROW = 13;
+export const GROUND_ROW = 13;
 
 // G=地面 B=砖 ?=问号 C=金币 E=敌人 F=旗帜 P=水管上左 Q=水管上右 p=水管体左 q=水管体右 S=阶梯
 // 阶梯用 S 表示单个阶梯块，需要手动排列

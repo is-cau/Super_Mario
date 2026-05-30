@@ -7,11 +7,11 @@ import {
   PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, SFX_ENABLED, GameState,
 } from "./settings";
 import { Player, Platform, QuestionBlock, Coin, Mushroom, Mushroom1UP, Goomba, Koopa, Piranha, Flag, Castle, Bowser, BowserFire, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
-import { buildLevel, LevelData } from "./level";
+import { buildLevel, LevelData, GROUND_ROW } from "./level";
 import { initCache } from "./assets";
 import { initBackground, updateBackground, drawBackground } from "./background";
 import { updateParticles, drawParticles, clearParticles, spawnBrickParticles, spawnCoinPop, spawnStompParticles, spawnFloatingText, spawnFirework } from "./particles";
-import { playSfx } from "./audio";
+import { playSfx, startBgm, stopBgm } from "./audio";
 
 export class Game {
   canvas: HTMLCanvasElement;
@@ -27,6 +27,7 @@ export class Game {
   pickupItems: (FireFlower | StarItem)[] = [];
   koopas: Koopa[] = [];
   oneupMushrooms: Mushroom1UP[] = [];
+  piranhas: Piranha[] = [];
   keysDown: Set<string> = new Set();
   lastTapDir: "" | "left" | "right" = "";
   lastTapTime: number = 0;
@@ -62,6 +63,14 @@ export class Game {
     this.pickupItems = [];
     this.oneupMushrooms = [];
     this.koopas = [...(this.level.koopas || [])];
+    // 在水管处生成食人花
+    this.piranhas = [];
+    const pipeCols = [25, 45, 88, 110, 175]; // 水管所在列
+    for (const col of pipeCols) {
+      const px = col * TILE + 8;
+      const py = (GROUND_ROW - 1) * TILE - 8;
+      this.piranhas.push(new Piranha(px, py));
+    }
     this.cameraX = 0;
     this.animTick = 0;
     this.gameOverTimer = 0;
@@ -104,12 +113,12 @@ export class Game {
 
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        if (this.state === "menu") { this.state = "playing"; this.resetLevel(); return; }
+        if (this.state === "menu") { this.state = "playing"; this.resetLevel(); startBgm(); return; }
         if (this.state === "playing" && !this.paused) {
           if (this.player.onGround) { this.player.vy = PLAYER_JUMP; this.player.jumpCount = 0; playSfx("jump"); }
           else if (this.player.jumpCount < 1) { this.player.vy = PLAYER_JUMP * 0.85; this.player.jumpCount++; playSfx("jump"); }
         }
-        if (this.state === "gameover" || this.state === "win") { this.state = "menu"; }
+        if (this.state === "gameover" || this.state === "win") { this.state = "menu"; stopBgm(); }
       }
       // 火球发射
       if ((e.key === "j" || e.key === "J") && this.state === "playing" && this.player.fireForm && this.player.shootCooldown <= 0) {
@@ -290,6 +299,29 @@ export class Game {
         }
       }
       if (k.x < 16) { k.vx = Math.abs(k.vx); k.x = 16; }
+    }
+
+    // 食人花伸缩
+    for (const p of this.piranhas) {
+      if (!p.alive) continue;
+      p.timer++;
+      if (p.up && p.timer > 60) { p.up = false; p.timer = 0; }
+      else if (!p.up && p.timer > 90) { p.up = true; p.timer = 0; }
+      if (Math.abs(player.centerX - p.centerX) < 200) {
+        p.y = p.up ? p.baseY - Math.min(p.timer * 2, 48) : p.baseY;
+      } else {
+        p.y = p.baseY + 48;
+      }
+    }
+    // 食人花碰撞
+    for (const p of this.piranhas) {
+      if (!p.alive || p.y > p.baseY + 10) continue;
+      if (player.collides(p) && !player.invincible) {
+        if (player.starForm) { p.alive = false; player.score += 400; playSfx("stomp"); continue; }
+        if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
+        else { if (player.lives <= 1) { this.state = "gameover"; return; } this.deathAnim = 30; this.deathVY = -8; }
+        playSfx("hurt");
+      }
     }
 
     // 1UP 蘑菇
@@ -709,6 +741,7 @@ export class Game {
       for (const p of this.pickupItems) p.draw(ctx, cameraX);
       for (const k of this.koopas) if (k.alive || k.inShell) k.draw(ctx, cameraX, this.animTick);
       for (const m1 of this.oneupMushrooms) m1.draw(ctx, cameraX);
+      for (const p of this.piranhas) if (p.alive) p.draw(ctx, cameraX);
       // 粒子
       drawParticles(ctx, cameraX);
 
