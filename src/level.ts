@@ -187,6 +187,10 @@ set(GROUND_ROW - 4, 115, "S"); set(GROUND_ROW - 3, 116, "S"); set(GROUND_ROW - 2
 set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3, 154, "S");
 
 // === 终点旗帜 ===
+// 隐藏砖块（碰到才出现，含1UP/金币）
+set(9, 15, "H"); set(8, 37, "H"); set(10, 61, "H");
+set(7, 83, "H"); set(9, 119, "H"); set(8, 141, "H");
+
 // 乌龟兵 (散布)
 set(GROUND_ROW - 1, 42, "T");
 set(GROUND_ROW - 1, 92, "T");
@@ -253,9 +257,13 @@ export function buildLevel(): LevelData {
           platforms.push(b);
           break;
         case "?":
-          questionBlocks.push(new QuestionBlock(x, y));
+        case "H": {
+          const qb = new QuestionBlock(x, y);
+          if (ch === "H") qb.hidden = true; // 隐藏砖不可见
+          questionBlocks.push(qb);
           platforms.push(new Platform(x, y, TILE, TILE));
           break;
+        }
         case "C":
           coins.push(new Coin(x + 6, y + 6));
           break;

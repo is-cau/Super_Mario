@@ -676,6 +676,7 @@ export class QuestionBlock extends Sprite {
   used: boolean = false;
   animTimer: number = 0;
   lit: boolean = true;
+  hidden: boolean = false;  // 隐藏砖（碰到才可见）
   coin: boolean = Math.random() < 0.5;
 
   constructor(x: number, y: number) {
@@ -683,6 +684,7 @@ export class QuestionBlock extends Sprite {
   }
 
   draw(ctx: CanvasRenderingContext2D, cameraX: number, _tick?: number) {
+    if (this.hidden && !this.used) return; // 隐藏砖不可见
     const sx = this.x - cameraX;
     if (this.used) {
       ctx.fillStyle = "#646464";

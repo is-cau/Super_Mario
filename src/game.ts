@@ -283,6 +283,7 @@ export class Game {
     }
 
     // 乌龟更新
+    let shellCombo = 0;
     for (const k of this.koopas) {
       if (!k.alive && k.inShell && !k.shellMoving) continue;
       k.updateAnim();
@@ -299,6 +300,17 @@ export class Game {
         }
       }
       if (k.x < 16) { k.vx = Math.abs(k.vx); k.x = 16; }
+      // 龟壳撞敌人（连击加分）
+      if (k.inShell && k.shellMoving && Math.abs(k.vx) > 2) {
+        for (const e of level.enemies) {
+          if (!e.alive) continue;
+          if (k.collides(e)) { e.alive = false; e.squishTimer = 20; shellCombo++; player.score += 100 * Math.pow(2, shellCombo); spawnFloatingText(e.x, e.y, `+${100 * Math.pow(2, shellCombo)}`, "#FFF"); playSfx("stomp"); }
+        }
+        for (const k2 of this.koopas) {
+          if (k2 === k || !k2.alive) continue;
+          if (k.collides(k2)) { k2.alive = false; k2.inShell = false; shellCombo++; player.score += 100 * Math.pow(2, shellCombo); playSfx("stomp"); }
+        }
+      }
     }
 
     // 食人花伸缩
