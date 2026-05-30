@@ -6,7 +6,7 @@ import {
   SCREEN_WIDTH, SCREEN_HEIGHT, GRAVITY, PLAYER_ACC, PLAYER_FRICTION,
   PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, SFX_ENABLED, GameState,
 } from "./settings";
-import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, Castle, Bowser, BowserFire, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
+import { Player, Platform, QuestionBlock, Coin, Mushroom, Mushroom1UP, Goomba, Koopa, Piranha, Flag, Castle, Bowser, BowserFire, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
 import { buildLevel, LevelData } from "./level";
 import { initCache } from "./assets";
 import { initBackground, updateBackground, drawBackground } from "./background";
@@ -25,6 +25,8 @@ export class Game {
   bossFires: BowserFire[] = [];
   stars: StarItem[] = [];
   pickupItems: (FireFlower | StarItem)[] = [];
+  koopas: Koopa[] = [];
+  oneupMushrooms: Mushroom1UP[] = [];
   keysDown: Set<string> = new Set();
   lastTapDir: "" | "left" | "right" = "";
   lastTapTime: number = 0;
@@ -58,6 +60,8 @@ export class Game {
     this.bossFires = [];
     this.stars = [];
     this.pickupItems = [];
+    this.oneupMushrooms = [];
+    this.koopas = [...(this.level.koopas || [])];
     this.cameraX = 0;
     this.animTick = 0;
     this.gameOverTimer = 0;
@@ -267,6 +271,37 @@ export class Game {
       // 防止跑出关卡边界
       if (enemy.x < 16) { enemy.vx = Math.abs(enemy.vx); enemy.x = 16; }
       if (enemy.x > (level.width || 6700) - 50) enemy.vx = -Math.abs(enemy.vx);
+    }
+
+    // 乌龟更新
+    for (const k of this.koopas) {
+      if (!k.alive && k.inShell && !k.shellMoving) continue;
+      k.updateAnim();
+      k.vy += GRAVITY * dt;
+      k.x += k.vx * dt;
+      k.y += k.vy * dt;
+      for (const plat of level.platforms) {
+        if (k.collides(plat)) {
+          if (k.vy > 0) { k.y = plat.top - k.h; k.vy = 0; k.onGround = true; }
+          if (Math.abs(k.right - plat.left) < 4 || Math.abs(k.left - plat.right) < 4) {
+            if (k.inShell && k.shellMoving) k.vx = -k.vx;
+            else k.vx = k.inShell ? 0 : -k.vx;
+          }
+        }
+      }
+      if (k.x < 16) { k.vx = Math.abs(k.vx); k.x = 16; }
+    }
+
+    // 1UP 蘑菇
+    for (const m1 of this.oneupMushrooms) {
+      if (m1.collected) continue;
+      m1.vy += GRAVITY * 0.5 * dt;
+      m1.x += m1.vx * dt;
+      m1.y += m1.vy * dt;
+      for (const plat of level.platforms) {
+        if (m1.collides(plat) && m1.vy > 0) { m1.y = plat.top - m1.h; m1.vy = 0; }
+        if (Math.abs(m1.right - plat.left) < 4 || Math.abs(m1.left - plat.right) < 4) m1.vx = -m1.vx;
+      }
     }
 
     // 蘑菇
@@ -494,6 +529,28 @@ export class Game {
         }
       }
     }
+    // 乌龟碰撞
+    for (const k of this.koopas) {
+      if (!player.invincible && k.alive && player.collides(k)) {
+        const fa = player.bottom - k.top < 40 && Math.abs(player.centerX - k.centerX) < 25;
+        if (fa) {
+          if (!k.inShell) { k.alive = false; k.inShell = true; k.vx = 0; k.h = 16; k.y += 14; player.vy = -7; player.score += 300; playSfx("stomp"); }
+          else if (!k.shellMoving) { k.shellMoving = true; k.vx = player.facingRight ? 8 : -8; player.vy = -6; }
+          else { k.shellMoving = false; k.vx = 0; player.vy = -6; }
+        } else if (k.inShell && k.shellMoving) {
+          if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
+          else { if (player.lives <= 1) { this.state = "gameover"; return; } this.deathAnim = 30; this.deathVY = -8; }
+          playSfx("hurt");
+        }
+      } else if (player.starForm && k.alive) { k.alive = false; k.inShell = false; player.score += 300; playSfx("stomp"); }
+    }
+    // 1UP 蘑菇
+    for (const m1 of this.oneupMushrooms) {
+      if (!m1.collected && player.collides(m1)) {
+        m1.collected = true; player.lives++; player.score += 1000; playSfx("powerup");
+        spawnFloatingText(m1.x, m1.y, "1UP!", "#00FF00");
+      }
+    }
 
     // 问号砖（从下方）
     for (const qb of level.questionBlocks) {
@@ -650,6 +707,8 @@ export class Game {
       for (const fb of this.fireballs) fb.draw(ctx, cameraX);
       for (const st of this.stars) st.draw(ctx, cameraX);
       for (const p of this.pickupItems) p.draw(ctx, cameraX);
+      for (const k of this.koopas) if (k.alive || k.inShell) k.draw(ctx, cameraX, this.animTick);
+      for (const m1 of this.oneupMushrooms) m1.draw(ctx, cameraX);
       // 粒子
       drawParticles(ctx, cameraX);
 

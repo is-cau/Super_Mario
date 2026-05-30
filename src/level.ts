@@ -5,7 +5,7 @@
 
 import { TILE } from "./settings";
 import {
-  Platform, QuestionBlock, Coin, Goomba, Flag, Pipe, Castle, Bowser,
+  Platform, QuestionBlock, Coin, Goomba, Koopa, Flag, Pipe, Castle, Bowser,
 } from "./sprites";
 
 /*
@@ -187,6 +187,11 @@ set(GROUND_ROW - 4, 115, "S"); set(GROUND_ROW - 3, 116, "S"); set(GROUND_ROW - 2
 set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3, 154, "S");
 
 // === 终点旗帜 ===
+// 乌龟兵 (散布)
+set(GROUND_ROW - 1, 42, "T");
+set(GROUND_ROW - 1, 92, "T");
+set(GROUND_ROW - 1, 145, "T");
+
 // 大乌龟 Bowser Boss (col 194)
 set(GROUND_ROW - 1, 194, "K");
 
@@ -215,6 +220,7 @@ export interface LevelData {
   bricks: Platform[];
   castle: Castle | null;
   boss: Bowser | null;
+  koopas: Koopa[];
   width: number;
 }
 
@@ -227,6 +233,7 @@ export function buildLevel(): LevelData {
   let flag: Flag | null = null;
   let castle: Castle | null = null;
   let boss: Bowser | null = null;
+  const koopas: Koopa[] = [];
   let castleX = 0, castleY = 0;
 
   for (let row = 0; row < levelMap.length; row++) {
@@ -258,6 +265,9 @@ export function buildLevel(): LevelData {
         case "K":
           boss = new Bowser(x, y - 24);
           break;
+        case "T":
+          koopas.push(new Koopa(x, y));
+          break;
         case "c":
           if (castleX === 0) {
             castleX = x;
@@ -285,5 +295,5 @@ export function buildLevel(): LevelData {
   // 构建城堡
   if (castleX > 0) castle = new Castle(castleX, castleY);
 
-  return { platforms, questionBlocks, coins, enemies, flag, bricks, castle, boss, width: COLS * TILE };
+  return { platforms, questionBlocks, coins, enemies, flag, bricks, castle, boss, koopas, width: COLS * TILE };
 }
