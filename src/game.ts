@@ -528,12 +528,25 @@ export class Game {
     ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}`, SCREEN_WIDTH / 2 - 30, 20);
     ctx.fillText(`世界`, SCREEN_WIDTH / 2 + 100, 20);
     ctx.fillText(`1-1`, SCREEN_WIDTH / 2 + 164, 20);
+    // 状态提示 — 右对齐显示
     ctx.textAlign = "right";
-    ctx.fillText(`生命: ${this.player.lives}`, SCREEN_WIDTH - 12, 20);
-    // 状态提示
-    if (this.player.fireForm) ctx.fillText(`🔥`, SCREEN_WIDTH - 60, 20);
-    if (this.player.starForm) ctx.fillText(`⭐${Math.ceil(this.player.starTimer / 60)}s`, SCREEN_WIDTH - 80, 20);
-    if (this.sprinting) { ctx.textAlign = "left"; ctx.fillStyle = "#FF0"; ctx.fillText("💨", 100, 30); }
+    let statusX = SCREEN_WIDTH - 12;
+    if (this.player.starForm) {
+      ctx.fillStyle = "#FFD700";
+      ctx.font = "bold 18px 'Courier New', monospace";
+      ctx.fillText(`⭐${Math.ceil(this.player.starTimer / 60)}`, statusX, 20);
+      statusX -= 50;
+    }
+    if (this.player.fireForm) {
+      ctx.font = "14px 'Courier New', monospace";
+      ctx.fillStyle = "#FFF";
+      ctx.fillText("🔥", statusX, 20);
+      statusX -= 20;
+    }
+    ctx.font = "bold 14px 'Courier New', monospace";
+    ctx.fillStyle = "#FFF";
+    ctx.fillText(`生命: ${this.player.lives}`, statusX, 20);
+    if (this.sprinting) { ctx.textAlign = "left"; ctx.fillStyle = "#FF0"; ctx.fillText("💨 冲刺", 100, 52); }
   }
 
   drawMenu() {
