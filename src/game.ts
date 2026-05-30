@@ -6,7 +6,7 @@ import {
   SCREEN_WIDTH, SCREEN_HEIGHT, GRAVITY, PLAYER_ACC, PLAYER_FRICTION,
   PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, SFX_ENABLED, GameState,
 } from "./settings";
-import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, Castle, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
+import { Player, Platform, QuestionBlock, Coin, Mushroom, Goomba, Flag, Castle, Bowser, BowserFire, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
 import { buildLevel, LevelData } from "./level";
 import { initCache } from "./assets";
 import { initBackground, updateBackground, drawBackground } from "./background";
@@ -22,6 +22,7 @@ export class Game {
   level!: LevelData;
   mushrooms: Mushroom[] = [];
   fireballs: Fireball[] = [];
+  bossFires: BowserFire[] = [];
   stars: StarItem[] = [];
   pickupItems: (FireFlower | StarItem)[] = [];
   keysDown: Set<string> = new Set();
@@ -53,6 +54,7 @@ export class Game {
     this.level = buildLevel();
     this.mushrooms = [];
     this.fireballs = [];
+    this.bossFires = [];
     this.stars = [];
     this.pickupItems = [];
     this.cameraX = 0;
@@ -305,6 +307,87 @@ export class Game {
         if (fb.collides(enemy)) { fb.alive = false; enemy.alive = false; enemy.squishTimer = 20; playSfx("stomp"); }
       }
     }
+    // Boss 更新
+    const boss = level.boss;
+    if (boss && boss.alive && player.x > boss.x - 400) {
+      boss.updateAnim();
+      // Boss 移动
+      boss.vy += GRAVITY * dt;
+      boss.x += boss.vx * dt;
+      boss.y += boss.vy * dt;
+      for (const plat of level.platforms) {
+        if (boss.collides(plat)) {
+          if (boss.vy > 0) { boss.y = plat.top - boss.h; boss.vy = 0; boss.onGround = true; }
+          if (Math.abs(boss.left - plat.right) < 4 || Math.abs(boss.right - plat.left) < 4) boss.vx = -boss.vx;
+        }
+      }
+      // Boss 发射火球
+      if (boss.shootCooldown <= 0 && boss.x < player.x + 400) {
+        this.bossFires.push(new BowserFire(boss.centerX, boss.bottom));
+        boss.shootCooldown = 90 + Math.random() * 60;
+      }
+      // Boss fireballs
+      for (const bf of this.bossFires) {
+        if (!bf.alive) continue;
+        bf.vy += 0.1 * dt;
+        bf.x += bf.vx * dt;
+        bf.y += bf.vy * dt;
+        for (const plat of level.platforms) {
+          if (bf.collides(plat) && bf.vy > 0) { bf.y = plat.top - bf.h; bf.vy = -3; }
+        }
+        if (bf.y > SCREEN_HEIGHT + 50) bf.alive = false;
+        // Boss 火球打玩家
+        if (bf.collides(player) && !player.invincible) {
+          bf.alive = false;
+          if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
+          else {
+            if (player.lives <= 1) { this.state = "gameover"; playSfx("gameover"); return; }
+            this.deathAnim = 30; this.deathVY = -8;
+          }
+          playSfx("hurt");
+        }
+      }
+      // 踩 Boss（只伤1HP，不杀）
+      if (boss.invincibleTimer <= 0 && player.collides(boss)) {
+        const fromAbove = player.bottom - boss.top < 50 && Math.abs(player.centerX - boss.centerX) < 35;
+        if (fromAbove) {
+          boss.hp--;
+          boss.invincibleTimer = 40;
+          player.vy = -8;
+          playSfx("stomp");
+          spawnFloatingText(boss.x + 20, boss.y, boss.hp > 0 ? "-1" : "KO!", "#FF0");
+          if (boss.hp <= 0) {
+            boss.alive = false;
+            player.score += 5000;
+            spawnFirework(boss.centerX, boss.y);
+          }
+        } else if (!player.invincible) {
+          if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
+          else {
+            if (player.lives <= 1) { this.state = "gameover"; playSfx("gameover"); return; }
+            this.deathAnim = 30; this.deathVY = -8;
+          }
+          playSfx("hurt");
+        }
+      }
+      // 火球打 Boss
+      for (const fb of this.fireballs) {
+        if (!fb.alive || !boss.alive) continue;
+        if (fb.collides(boss) && boss.invincibleTimer <= 0) {
+          fb.alive = false;
+          boss.hp--;
+          boss.invincibleTimer = 30;
+          playSfx("stomp");
+          spawnFloatingText(boss.x + 20, boss.y, boss.hp > 0 ? "-1" : "KO!", "#FF0");
+          if (boss.hp <= 0) {
+            boss.alive = false;
+            player.score += 5000;
+            spawnFirework(boss.centerX, boss.y);
+          }
+        }
+      }
+    }
+
     // 无敌星更新
     for (const st of this.stars) {
       if (st.collected) continue;
@@ -539,6 +622,9 @@ export class Game {
       // 旗帜
       if (level.flag) level.flag.draw(ctx, cameraX);
       if (level.castle) level.castle.draw(ctx, cameraX);
+      // Boss
+      if (level.boss && level.boss.alive) level.boss.draw(ctx, cameraX, this.animTick);
+      for (const bf of this.bossFires) bf.draw(ctx, cameraX);
 
       // 火球 星星 道具
       for (const fb of this.fireballs) fb.draw(ctx, cameraX);

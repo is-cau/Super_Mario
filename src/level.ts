@@ -5,7 +5,7 @@
 
 import { TILE } from "./settings";
 import {
-  Platform, QuestionBlock, Coin, Goomba, Flag, Pipe, Castle,
+  Platform, QuestionBlock, Coin, Goomba, Flag, Pipe, Castle, Bowser,
 } from "./sprites";
 
 /*
@@ -187,17 +187,19 @@ set(GROUND_ROW - 4, 115, "S"); set(GROUND_ROW - 3, 116, "S"); set(GROUND_ROW - 2
 set(GROUND_ROW - 1, 152, "S"); set(GROUND_ROW - 2, 153, "S"); set(GROUND_ROW - 3, 154, "S");
 
 // === 终点旗帜 ===
-// 终点旗帜 (col 194，与城堡拉开距离)
-set(GROUND_ROW - 1, 194, "F");
-set(GROUND_ROW, 194, "G"); set(GROUND_ROW, 195, "G");
+// 大乌龟 Bowser Boss (col 194)
+set(GROUND_ROW - 1, 194, "K");
 
-// 城堡 (col 203-204，坐在地面上)
-set(GROUND_ROW - 4, 203, "c"); set(GROUND_ROW - 4, 204, "c");
-set(GROUND_ROW - 3, 203, "c"); set(GROUND_ROW - 3, 204, "c");
-set(GROUND_ROW - 2, 203, "c"); set(GROUND_ROW - 2, 204, "c");
-set(GROUND_ROW - 1, 203, "c"); set(GROUND_ROW - 1, 204, "c");
-// 城堡下地面
-for (let c = 203; c < 207; c++) {
+// 终点旗帜 (col 198，Boss之后)
+set(GROUND_ROW - 1, 198, "F");
+set(GROUND_ROW, 198, "G"); set(GROUND_ROW, 199, "G");
+
+// 城堡 (col 200-201，旗杆之后)
+set(GROUND_ROW - 4, 200, "c"); set(GROUND_ROW - 4, 201, "c");
+set(GROUND_ROW - 3, 200, "c"); set(GROUND_ROW - 3, 201, "c");
+set(GROUND_ROW - 2, 200, "c"); set(GROUND_ROW - 2, 201, "c");
+set(GROUND_ROW - 1, 200, "c"); set(GROUND_ROW - 1, 201, "c");
+for (let c = 200; c < 204; c++) {
   for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "G");
 }
 
@@ -216,6 +218,7 @@ export interface LevelData {
   flag: Flag | null;
   bricks: Platform[];
   castle: Castle | null;
+  boss: Bowser | null;
   width: number;
 }
 
@@ -227,6 +230,7 @@ export function buildLevel(): LevelData {
   const bricks: Platform[] = [];
   let flag: Flag | null = null;
   let castle: Castle | null = null;
+  let boss: Bowser | null = null;
   let castleX = 0, castleY = 0;
 
   for (let row = 0; row < levelMap.length; row++) {
@@ -255,6 +259,9 @@ export function buildLevel(): LevelData {
         case "E":
           enemies.push(new Goomba(x, y));
           break;
+        case "K":
+          boss = new Bowser(x, y - 24);
+          break;
         case "c":
           if (castleX === 0) {
             castleX = x;
@@ -282,5 +289,5 @@ export function buildLevel(): LevelData {
   // 构建城堡
   if (castleX > 0) castle = new Castle(castleX, castleY);
 
-  return { platforms, questionBlocks, coins, enemies, flag, bricks, castle, width: COLS * TILE };
+  return { platforms, questionBlocks, coins, enemies, flag, bricks, castle, boss, width: COLS * TILE };
 }
