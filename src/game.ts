@@ -828,7 +828,13 @@ export class Game {
 
       // 玩家
       if (!player.invincible || player.invincibleTimer % 6 < 3) {
+        // 无敌星彩虹闪烁效果
+        if (player.starForm) {
+          const hues = ['none', 'hue-rotate(120deg)', 'hue-rotate(240deg)', 'brightness(1.5)'];
+          ctx.filter = hues[Math.floor(this.animTick / 4) % 4];
+        }
         player.draw(ctx, cameraX, this.animTick);
+        if (player.starForm) ctx.filter = 'none';
       }
 
       // HUD
