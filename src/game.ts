@@ -564,17 +564,49 @@ export class Game {
 
   drawGameOver() {
     const { ctx } = this;
-    ctx.fillStyle = "#000000";
+    // 暖色渐变背景
+    const grad = ctx.createLinearGradient(0, 0, 0, SCREEN_HEIGHT);
+    grad.addColorStop(0, "#1a0533");
+    grad.addColorStop(0.6, "#2d1b69");
+    grad.addColorStop(1, "#4a2080");
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // 星星点缀
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    for (let i = 0; i < 30; i++) {
+      const sx = (i * 137 + 50) % SCREEN_WIDTH;
+      const sy = (i * 89 + 30) % 300;
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+
+    // 标题框
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(SCREEN_WIDTH / 2 - 180, 140, 360, 100);
+    ctx.strokeStyle = "#FFD700";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(SCREEN_WIDTH / 2 - 180, 140, 360, 100);
+
     ctx.textAlign = "center";
-    ctx.fillStyle = "#E80000";
-    ctx.font = "bold 40px 'Courier New', monospace";
-    ctx.fillText("游戏结束", SCREEN_WIDTH / 2, 220);
+    ctx.fillStyle = "#FFD700";
+    ctx.font = "bold 36px 'Courier New', monospace";
+    ctx.fillText("游 戏 结 束", SCREEN_WIDTH / 2, 200);
+
+    // 信息区
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "18px 'Courier New', monospace";
-    ctx.fillText(`最终得分: ${this.player.score}`, SCREEN_WIDTH / 2, 300);
-    const blink = Math.sin(this.animTick * 0.1) > 0;
-    if (blink) ctx.fillText("按 ENTER 继续", SCREEN_WIDTH / 2, 400);
+    ctx.font = "20px 'Courier New', monospace";
+    ctx.fillText(`得分: ${this.player.score}`, SCREEN_WIDTH / 2, 290);
+    ctx.fillText(`🪙 金币: ${this.player.coins}`, SCREEN_WIDTH / 2, 320);
+
+    // 画大马里奥倒下
+    const mario = new Player(SCREEN_WIDTH / 2 - 16, 350);
+    mario.draw(ctx, 0, this.animTick);
+
+    // 闪烁提示
+    ctx.font = "16px 'Courier New', monospace";
+    ctx.fillStyle = "#AAAAAA";
+    const blink = Math.sin(this.animTick * 0.08) > 0;
+    if (blink) ctx.fillText("按 ENTER 重新开始", SCREEN_WIDTH / 2, 460);
   }
 
   drawWin() {
