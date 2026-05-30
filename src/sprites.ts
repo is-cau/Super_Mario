@@ -3,7 +3,7 @@
  * 所有精灵为 16×16 或 16×32 像素，在游戏中以 2.5x / 5x 缩放渲染
  */
 
-import { drawSprite, solidMatrix, overlay } from "./renderer";
+import { drawSprite, solidMatrix, overlay, PALETTE } from "./renderer";
 import { drawCached } from "./assets";
 
 // ==================== 像素数据 ====================
@@ -483,7 +483,18 @@ export class Player extends Sprite {
       if (this.big) {
         const img = this.onGround && Math.abs(this.vx) > 0.5
           ? (this.animFrame % 2 === 0 ? c.mb0 : c.mb1) : c.mb0;
-        drawCached(ctx, img, sx, sy, !this.facingRight);
+        // 大马里奥：宽度拉伸 1.5x，高度 2x，比例更协调
+        const bw = img.width * 1.2;
+        const bh = img.height;
+        if (this.facingRight) {
+          ctx.drawImage(img, sx, sy, bw, bh);
+        } else {
+          ctx.save();
+          ctx.translate(sx + bw, sy);
+          ctx.scale(-1, 1);
+          ctx.drawImage(img, 0, 0, bw, bh);
+          ctx.restore();
+        }
       } else {
         let img = c.ms0;
         if (this.onGround && Math.abs(this.vx) > 0.5) {
@@ -494,12 +505,31 @@ export class Player extends Sprite {
         drawCached(ctx, img, sx, sy, !this.facingRight);
       }
     } else {
-      const PS = 2;
       if (this.big) {
         const data = this.onGround && Math.abs(this.vx) > 0.5
           ? (this.animFrame % 2 === 0 ? MARIO_BIG : MARIO_BIG_JUMP) : MARIO_BIG;
-        drawSprite(ctx, data, sx, sy, PS, !this.facingRight);
+        // 大马里奥宽度拉伸 1.2x，比例更像正版
+        const cols = data[0].length;
+        const rows = data.length;
+        const pw = 2.4; // 每像素宽度
+        const ph = 2;   // 每像素高度
+        if (this.facingRight) {
+          for (let r = 0; r < rows; r++)
+            for (let c = 0; c < cols; c++)
+              if (data[r][c] !== 0) {
+                ctx.fillStyle = (PALETTE as any)[data[r][c]] || "#000";
+                ctx.fillRect(sx + c * pw, sy + r * ph, pw, ph);
+              }
+        } else {
+          for (let r = 0; r < rows; r++)
+            for (let c = 0; c < cols; c++)
+              if (data[r][c] !== 0) {
+                ctx.fillStyle = (PALETTE as any)[data[r][c]] || "#000";
+                ctx.fillRect(sx + (cols - 1 - c) * pw, sy + r * ph, pw, ph);
+              }
+        }
       } else {
+        const PS = 2;
         let data = MARIO_SMALL_STAND;
         if (this.onGround && Math.abs(this.vx) > 0.5) {
           data = this.animFrame % 2 === 0 ? MARIO_SMALL_1 : MARIO_SMALL_2;

@@ -120,8 +120,9 @@ const coinPositions: [number, number][] = [
 for (const [r, c] of coinPositions) set(r, c, "C");
 
 // === 敌人 ===
+// 敌人位置：避免靠近砖块结构（留至少5格间距）
 const enemyPositions: [number, number][] = [
-  [GROUND_ROW - 1, 18],
+  [GROUND_ROW - 1, 14],
   [GROUND_ROW - 1, 28],
   [GROUND_ROW - 1, 38],
   [GROUND_ROW - 1, 48],

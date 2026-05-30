@@ -169,16 +169,29 @@ export class Game {
       enemy.x += enemy.vx * dt;
       enemy.y += enemy.vy * dt;
       enemy.onGround = false;
-      // 巡逻边界
-      if (enemy.x <= enemy.patrolLeft) { enemy.vx = Math.abs(enemy.vx); enemy.x = enemy.patrolLeft; }
-      if (enemy.x >= enemy.patrolRight) { enemy.vx = -Math.abs(enemy.vx); enemy.x = enemy.patrolRight; }
+      let hitWall = false;
       for (const plat of level.platforms) {
         if (enemy.collides(plat)) {
           if (enemy.vy > 0) { enemy.y = plat.top - enemy.h; enemy.vy = 0; enemy.onGround = true; }
-          if (Math.abs(enemy.right - plat.left) < 4) enemy.vx = -Math.abs(enemy.vx);
-          if (Math.abs(enemy.left - plat.right) < 4) enemy.vx = Math.abs(enemy.vx);
+          if (Math.abs(enemy.right - plat.left) < 4) { enemy.vx = -Math.abs(enemy.vx); enemy.x = plat.left - enemy.w; hitWall = true; }
+          if (Math.abs(enemy.left - plat.right) < 4) { enemy.vx = Math.abs(enemy.vx); enemy.x = plat.right; hitWall = true; }
         }
       }
+      // 悬崖边缘检测：前方没有地面时回头
+      if (enemy.onGround && !hitWall) {
+        const aheadX = enemy.vx > 0 ? enemy.right + 2 : enemy.left - 2;
+        const belowY = enemy.bottom + 8;
+        let groundAhead = false;
+        for (const plat of level.platforms) {
+          if (aheadX >= plat.left && aheadX <= plat.right && belowY >= plat.top && belowY <= plat.bottom) {
+            groundAhead = true; break;
+          }
+        }
+        if (!groundAhead) { enemy.vx = -enemy.vx; enemy.x += enemy.vx * 2; }
+      }
+      // 巡逻边界回退（更宽，主要防卡砖缝）
+      if (enemy.x <= enemy.patrolLeft) { enemy.vx = Math.abs(enemy.vx); enemy.x = enemy.patrolLeft + 2; }
+      if (enemy.x >= enemy.patrolRight) { enemy.vx = -Math.abs(enemy.vx); enemy.x = enemy.patrolRight - 2; }
     }
 
     // 蘑菇
@@ -365,39 +378,17 @@ export class Game {
       }
     }
 
-    // 旗帜
+    // 旗帜 — 碰到即通关
     if (!this.flagReached && level.flag && player.collides(level.flag)) {
       this.flagReached = true;
-      player.flagSliding = true;
       player.vx = 0;
-      player.vx = 0; // 停止移动
+      const timeBonus = Math.max(0, 300 - this.animTick) * 10;
+      player.score += 3000 + player.coins * 100 + timeBonus;
+      spawnFloatingText(level.flag.x + 50, level.flag.y + 20,
+        `+${3000 + player.coins * 100 + timeBonus}`, "#FFD700");
       playSfx("win");
-    }
-    // 旗杆滑下动画
-    if (this.flagReached && player.flagSliding && level.flag) {
-      player.y += 2;
-      if (player.bottom >= level.flag.bottom) {
-        player.flagSliding = false;
-        player.onGround = true;
-        player.y = level.flag.bottom - player.h;
-        // 计算分数
-        const timeBonus = Math.max(0, 300 - this.animTick) * 10;
-        player.score += 3000 + player.coins * 100 + timeBonus;
-        spawnFloatingText(level.flag.x + 50, level.flag.y + 20,
-          `+${3000 + player.coins * 100 + timeBonus}`, "#FFD700");
-      }
-    }
-    // 滑下后自动走向城堡
-    if (this.flagReached && !player.flagSliding) {
-      const castleX = (level.castle?.x ?? 6500) + 20;
-      if (player.centerX < castleX) {
-        player.vx = 2;
-        player.facingRight = true;
-      } else {
-        player.vx = 0;
-        this.state = "win";
-        spawnFirework(castleX, SCREEN_HEIGHT - 100);
-      }
+      if (level.castle) spawnFirework(level.castle.x + 48, SCREEN_HEIGHT - 150);
+      this.state = "win";
     }
 
     // 相机
