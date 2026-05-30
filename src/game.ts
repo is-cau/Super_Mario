@@ -287,14 +287,22 @@ export class Game {
         if (!enemy.alive) continue;
         if (player.collides(enemy)) {
           if (player.starForm) { enemy.alive = false; enemy.squishTimer = 20; player.score += 500; playSfx("stomp"); continue; }
-          if (player.vy > 0 && player.bottom - enemy.top < 20) {
-            enemy.alive = false;
-            enemy.squishTimer = 30;
-            player.vy = -6;
-            player.score += 500;
+          // 放宽踩怪判定：上方 + 横向重叠 25px + 纵向 40px
+          const fromAbove = player.bottom - enemy.top < 40 && Math.abs(player.centerX - enemy.centerX) < 25;
+          if (fromAbove) {
+            // 一次性踩死范围内所有敌人
+            for (const e2 of level.enemies) {
+              if (!e2.alive) continue;
+              if (Math.abs(e2.centerX - enemy.centerX) < 50 && player.bottom - e2.top < 50) {
+                e2.alive = false;
+                e2.squishTimer = 30;
+                player.score += 500;
+                spawnStompParticles(e2.x, e2.bottom);
+                spawnFloatingText(e2.x, e2.y, "+500", "#FFFFFF");
+              }
+            }
+            player.vy = -7;
             playSfx("stomp");
-            spawnStompParticles(enemy.x, enemy.bottom);
-            spawnFloatingText(enemy.x, enemy.y, "+500", "#FFFFFF");
           } else {
             if (player.big) { this.shrinkPlayer(); player.invincible = true; player.invincibleTimer = 90; }
             else {
