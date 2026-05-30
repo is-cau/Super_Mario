@@ -47,13 +47,15 @@ for (let c = 0; c < COLS; c++) {
   }
 }
 
-// 地面断层 1: 列 58-60（上方放跳台）
-set(11, 58, "B"); set(11, 59, "B"); set(11, 60, "B");
+// 地面断层 1: 列 58-60（地面级跳台，加金币）
+set(GROUND_ROW - 1, 58, "B"); set(GROUND_ROW - 1, 59, "B"); set(GROUND_ROW - 1, 60, "B");
+set(9, 59, "C");
 for (let c = 58; c <= 60; c++) {
   for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "-");
 }
-// 地面断层 2: 列 148-150（上方放跳台）
-set(11, 148, "B"); set(11, 149, "B"); set(11, 150, "B");
+// 地面断层 2: 列 148-150（地面级跳台，加金币）
+set(GROUND_ROW - 1, 148, "B"); set(GROUND_ROW - 1, 149, "B"); set(GROUND_ROW - 1, 150, "B");
+set(9, 149, "C");
 for (let c = 148; c <= 150; c++) {
   for (let r = GROUND_ROW; r < ROWS; r++) set(r, c, "-");
 }

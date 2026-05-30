@@ -827,7 +827,8 @@ export class Game {
     ctx.fillText(`马力欧`, 12, 20);
     const score = String(this.player.score).padStart(6, "0");
     ctx.fillText(score, 80, 20);
-    ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}`, SCREEN_WIDTH / 2 - 50, 20);
+    const coinsTo1UP = 100 - (this.player.coins % 100);
+    ctx.fillText(`🪙 x${this.player.coins.toString().padStart(2, "0")}→1UP:${coinsTo1UP}`, SCREEN_WIDTH / 2 - 60, 20);
     if (this.timeLeft <= 100 && this.animTick % 30 < 15) {
       ctx.fillStyle = "#FF0000"; ctx.font = "bold 16px 'Courier New', monospace";
       ctx.textAlign = "right";
