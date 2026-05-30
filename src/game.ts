@@ -287,6 +287,17 @@ export class Game {
       fb.vy += GRAVITY * 0.3 * dt;
       fb.x += fb.vx * dt;
       fb.y += fb.vy * dt;
+      // 火球碰撞平台 → 反弹
+      for (const plat of level.platforms) {
+        if (fb.collides(plat)) {
+          if (fb.vy > 0) { fb.y = plat.top - fb.h; fb.vy = -6; }  // 落地反弹
+          else if (fb.vy < 0) { fb.y = plat.bottom; fb.vy = 0; }    // 碰顶
+          // 碰墙反弹
+          if (Math.abs(fb.right - plat.left) < 6 || Math.abs(fb.left - plat.right) < 6) {
+            fb.vx = -fb.vx;
+          }
+        }
+      }
       if (fb.x < this.cameraX - 50 || fb.x > this.cameraX + SCREEN_WIDTH + 50 || fb.y > SCREEN_HEIGHT) fb.alive = false;
       // 火球 vs 敌人
       for (const enemy of level.enemies) {
