@@ -1,63 +1,64 @@
-# 超级马力欧 — Super Mario Bros 🍄
+# 像素大冒险 | Super Mario
 
-基于 **TypeScript + HTML5 Canvas** 的超级马力欧经典游戏复刻，纯前端项目。
+一款使用 TypeScript 与 HTML5 Canvas 制作的复古横版闯关游戏。项目包含完整关卡、像素精灵、合成音效、Boss 战和响应式触屏操作。
 
-🌐 **[在线体验 →](https://is-cau.github.io/Super_Mario/)**
+**[在线游玩](https://is-cau.github.io/Super_Mario/)**
 
-## 🎮 操作方式
+## 操作
 
-| 按键 | 功能 |
-|------|------|
-| ← → / A D | 左右移动 |
-| ↑ / W / 空格 | 跳跃 |
-| ESC | 退出（刷新页面返回） |
+| 操作 | 键盘 | 触屏 |
+| --- | --- | --- |
+| 移动 | `←` `→` / `A` `D` | 方向键 |
+| 跳跃 / 二段跳 | `↑` / `W` / `Space` | A |
+| 发射火球 | `J` | B |
+| 冲刺 | 双击并按住移动键 | 双击并按住方向键 |
+| 暂停 | `Esc` | 顶部暂停按钮 |
 
-## 🚀 本地开发
+## 特色
+
+- 完整的横版关卡、相机跟随和碰撞系统
+- 栗子仔、乌龟、食人花与 Bowser Boss
+- 蘑菇、火焰花、无敌星、隐藏砖块和 1UP
+- 可变跳跃、二段跳、冲刺和踩怪连击
+- Web Audio API 合成的 8-bit 音效与背景音乐
+- 自适应桌面和移动端的街机界面与触控控制器
+- 本地保存最高分和声音偏好
+
+## 本地开发
+
+需要 Node.js 20 或更高版本。
 
 ```bash
 npm install
-npm run dev      # 启动开发服务器
-npm run build    # 生产构建
+npm run dev
 ```
 
-## ✨ 游戏功能
+生产构建：
 
-- 🧱 砖块平台 + 重力物理
-- ❓ 问号砖块（顶出金币/蘑菇）
-- 🪙 金币收集
-- 🍄 变大蘑菇
-- 👾 栗子仔敌人（踩踏击杀）
-- 🏁 终点旗帜通关
-- 📷 相机跟随
-- ❤️ 生命系统 + 无敌帧
-
-## 🏗️ 技术栈
-
-- **TypeScript** — 类型安全
-- **Vite** — 极速构建
-- **HTML5 Canvas** — 游戏渲染
-- **GitHub Actions** — 自动部署到 GitHub Pages
-
-## 🏗️ 项目结构
-
+```bash
+npm run build
+npm run preview
 ```
+
+## 项目结构
+
+```text
 Super_Mario/
-├── index.html           # 入口 HTML
+├── index.html
 ├── src/
-│   ├── main.ts          # 游戏入口
-│   ├── game.ts          # 游戏主循环 + 碰撞
-│   ├── sprites.ts       # 精灵类（玩家/敌人/道具）
-│   ├── level.ts         # 关卡设计
-│   └── settings.ts      # 游戏配置
-├── .github/workflows/
-│   └── deploy.yml       # 自动部署
-└── vite.config.ts       # Vite 配置
+│   ├── main.ts          # 页面交互与游戏循环
+│   ├── game.ts          # 游戏状态、物理与碰撞
+│   ├── sprites.ts       # 玩家、敌人、道具精灵
+│   ├── level.ts         # 关卡数据
+│   ├── audio.ts         # 合成音效与音乐
+│   ├── background.ts    # 视差背景
+│   └── style.css        # 响应式街机界面
+└── .github/workflows/
+    └── deploy.yml       # GitHub Pages 自动部署
 ```
 
-## ⚠️ 免责声明
+推送到 `master` 后，GitHub Actions 会构建项目并部署到 GitHub Pages。
 
-本项目仅供编程技术学习与交流，**非商业用途**。超级马力欧角色及游戏设计版权归任天堂（Nintendo）所有。
+## 免责声明
 
-## 📝 License
-
-MIT
+本项目仅供编程技术学习与交流，非商业用途。超级马力欧角色及游戏设计版权归 Nintendo 所有。

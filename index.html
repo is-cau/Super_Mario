@@ -1,15 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>超级马力欧 — Super Mario Bros</title>
-  <link rel="stylesheet" href="./src/style.css" />
-</head>
-<body>
-  <div id="app">
-    <canvas id="gameCanvas"></canvas>
-  </div>
-  <script type="module" src="./src/main.ts"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101218" />
+    <meta name="description" content="使用 TypeScript 与 HTML5 Canvas 制作的复古横版闯关游戏。" />
+    <title>像素大冒险 | Super Mario</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#gameCanvas">跳到游戏</a>
+    <main class="arcade" id="app">
+      <header class="arcade__header">
+        <div class="brand" aria-label="像素大冒险">
+          <span class="brand__mark" aria-hidden="true">M</span>
+          <span class="brand__copy">
+            <strong>像素大冒险</strong>
+            <small>WORLD 1-1</small>
+          </span>
+        </div>
+
+        <div class="record" aria-live="polite">
+          <span>最高分</span>
+          <strong id="bestScore">000000</strong>
+        </div>
+
+        <nav class="toolbar" aria-label="游戏设置">
+          <button class="icon-button" id="soundToggle" type="button" aria-label="关闭声音" title="声音">
+            <span aria-hidden="true" data-sound-icon>♪</span>
+          </button>
+          <button class="icon-button" id="pauseToggle" type="button" aria-label="暂停游戏" title="暂停">
+            <span aria-hidden="true" data-pause-icon>Ⅱ</span>
+          </button>
+          <button class="icon-button" id="fullscreenToggle" type="button" aria-label="进入全屏" title="全屏">
+            <span aria-hidden="true">⛶</span>
+          </button>
+        </nav>
+      </header>
+
+      <section class="cabinet" id="gameShell" aria-label="游戏区域">
+        <div class="screen">
+          <canvas id="gameCanvas" tabindex="0" aria-label="像素大冒险游戏画面"></canvas>
+          <div class="screen__glass" aria-hidden="true"></div>
+          <div class="game-action" id="gameAction">
+            <button class="start-button" id="startGame" type="button">开始游戏</button>
+          </div>
+        </div>
+
+        <div class="mobile-controls" aria-label="触屏控制器">
+          <div class="d-pad">
+            <button class="control-button control-button--direction" type="button" data-game-key="ArrowLeft" aria-label="向左">
+              <span aria-hidden="true">←</span>
+            </button>
+            <button class="control-button control-button--direction" type="button" data-game-key="ArrowRight" aria-label="向右">
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+          <div class="action-pad">
+            <button class="control-button control-button--action control-button--fire" type="button" data-game-key="j" aria-label="发射火球">
+              <span aria-hidden="true">B</span>
+            </button>
+            <button class="control-button control-button--action" type="button" data-game-key=" " aria-label="跳跃">
+              <span aria-hidden="true">A</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="arcade__footer">
+        <span>TYPE · PLAY · REPEAT</span>
+        <a href="https://github.com/is-cau/Super_Mario" target="_blank" rel="noreferrer">SOURCE ↗</a>
+      </footer>
+    </main>
+    <p class="legal">非商业技术练习；角色及原作版权归 Nintendo 所有。</p>
+    <div class="sr-only" id="gameStatus" aria-live="polite"></div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
 </html>

@@ -4,14 +4,14 @@
 
 import {
   SCREEN_WIDTH, SCREEN_HEIGHT, GRAVITY, PLAYER_ACC, PLAYER_FRICTION,
-  PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, SFX_ENABLED, GameState,
+  PLAYER_JUMP, MAX_SPEED, PIXEL, TILE, GameState,
 } from "./settings";
 import { Player, Platform, QuestionBlock, Coin, Mushroom, Mushroom1UP, Goomba, Koopa, Piranha, Flag, Castle, Bowser, BowserFire, FireFlower, Star as StarItem, Fireball, setSpriteCache } from "./sprites";
 import { buildLevel, LevelData, GROUND_ROW } from "./level";
 import { initCache } from "./assets";
 import { initBackground, updateBackground, drawBackground } from "./background";
 import { updateParticles, drawParticles, clearParticles, spawnBrickParticles, spawnCoinPop, spawnStompParticles, spawnFloatingText, spawnFirework } from "./particles";
-import { playSfx, startBgm, stopBgm } from "./audio";
+import { playSfx, startBgm } from "./audio";
 
 export class Game {
   canvas: HTMLCanvasElement;
@@ -55,6 +55,19 @@ export class Game {
     const cache = initCache();
     if (cache) setSpriteCache(cache);
     else console.warn("Sprite cache not supported, using fallback renderer");
+  }
+
+  start() {
+    if (this.state === "playing") return;
+    this.state = "playing";
+    this.resetLevel();
+    startBgm();
+  }
+
+  togglePause() {
+    if (this.state !== "playing") return;
+    this.paused = !this.paused;
+    this.keysDown.clear();
   }
 
   resetLevel() {
@@ -113,18 +126,15 @@ export class Game {
         this.lastTapTime = 0; this.sprinting = false; // 跳跃取消冲刺标记
       }
 
-      if (e.key === "Escape") {
-        if (this.state === "playing") this.paused = !this.paused;
-      }
+      if (e.key === "Escape") this.togglePause();
 
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        if (this.state === "menu") { this.state = "playing"; this.resetLevel(); startBgm(); return; }
+        if (this.state === "menu" || this.state === "gameover" || this.state === "win") { this.start(); return; }
         if (this.state === "playing" && !this.paused) {
           if (this.player.onGround) { this.player.vy = PLAYER_JUMP; this.player.jumpCount = 0; playSfx("jump"); }
           else if (this.player.jumpCount < 1) { this.player.vy = PLAYER_JUMP * 0.85; this.player.jumpCount++; playSfx("jump"); }
         }
-        if (this.state === "gameover" || this.state === "win") { this.state = "menu"; stopBgm(); }
       }
       // 火球发射
       if ((e.key === "j" || e.key === "J") && this.state === "playing" && this.player.fireForm && this.player.shootCooldown <= 0) {
@@ -135,6 +145,7 @@ export class Game {
       }
     });
     window.addEventListener("keyup", e => this.keysDown.delete(e.key));
+    window.addEventListener("blur", () => this.keysDown.clear());
   }
 
   // ================== 物理更新 ==================
@@ -848,9 +859,6 @@ export class Game {
         ctx.font = "bold 40px 'Courier New', monospace";
         ctx.textAlign = "center";
         ctx.fillText("暂 停", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-        ctx.font = "16px 'Courier New', monospace";
-        ctx.fillStyle = "#AAA";
-        ctx.fillText("按 ESC 继续", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40);
       }
 
       if (this.state === "win") {
@@ -908,41 +916,56 @@ export class Game {
 
   drawMenu() {
     const { ctx } = this;
+
+    ctx.fillStyle = "rgba(16, 18, 24, 0.18)";
+    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // Sun and chunky horizon details keep the title screen tied to the game world.
+    ctx.fillStyle = "#FFD447";
+    ctx.beginPath();
+    ctx.arc(670, 105, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ED3636";
+    ctx.fillRect(0, 405, SCREEN_WIDTH, 10);
+    ctx.fillStyle = "#101218";
+    ctx.fillRect(0, 415, SCREEN_WIDTH, 185);
+    for (let x = 0; x < SCREEN_WIDTH; x += 40) {
+      ctx.fillStyle = x % 80 === 0 ? "#C84C0C" : "#E09040";
+      ctx.fillRect(x, 415, 38, 30);
+    }
+
     ctx.textAlign = "center";
-    ctx.fillStyle = "#E80000";
-    ctx.font = "bold 40px 'Courier New', monospace";
-    ctx.fillText("超级马力欧", SCREEN_WIDTH / 2 + 1, 201);
-    ctx.fillStyle = "#FF8C00";
-    ctx.font = "bold 40px 'Courier New', monospace";
-    ctx.fillText("超级马力欧", SCREEN_WIDTH / 2, 200);
+    ctx.fillStyle = "#FFD447";
+    ctx.font = "bold 14px 'Courier New', monospace";
+    ctx.fillText("WORLD  1-1", SCREEN_WIDTH / 2, 105);
+    ctx.fillStyle = "#101218";
+    ctx.font = "bold 52px Impact, sans-serif";
+    ctx.fillText("像素大冒险", SCREEN_WIDTH / 2 + 5, 191);
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "20px 'Courier New', monospace";
-    ctx.fillText("兄弟", SCREEN_WIDTH / 2, 235);
-    ctx.font = "14px 'Courier New', monospace";
-    ctx.fillText("© 1985 Nintendo — HTML5 技术练习", SCREEN_WIDTH / 2, 270);
-    ctx.font = "11px sans-serif";
-    ctx.fillStyle = "#666";
-    ctx.fillText("仅供编程技术学习与交流，非商业用途", SCREEN_WIDTH / 2, 296);
-    ctx.font = "18px 'Courier New', monospace";
-    const blink = Math.sin(this.animTick * 0.1) > 0;
-    if (blink) ctx.fillText("按 ENTER 开始游戏", SCREEN_WIDTH / 2, 370);
-    ctx.font = "13px sans-serif";
-    ctx.fillStyle = "#AAAAAA";
-    ctx.fillText("←→ 移动  空格/↑ 跳跃  J 火球", SCREEN_WIDTH / 2, 420);
-    ctx.fillText("双击 ←→ 冲刺加速", SCREEN_WIDTH / 2, 443);
-    // 画小马里奥
-    const mario = new Player(SCREEN_WIDTH / 2 - 16, 310);
+    ctx.fillText("像素大冒险", SCREEN_WIDTH / 2, 185);
+    ctx.fillStyle = "#ED3636";
+    ctx.font = "bold 18px 'Courier New', monospace";
+    ctx.fillText("PIXEL QUEST", SCREEN_WIDTH / 2, 226);
+
+    const tileX = SCREEN_WIDTH / 2 - 74;
+    for (let index = 0; index < 3; index++) {
+      ctx.fillStyle = index === 1 ? "#FFD447" : "#C84C0C";
+      ctx.fillRect(tileX + index * 54, 268, 42, 42);
+      ctx.strokeStyle = "#101218";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(tileX + index * 54, 268, 42, 42);
+    }
+    ctx.fillStyle = "#101218";
+    ctx.font = "bold 24px 'Courier New', monospace";
+    ctx.fillText("?", SCREEN_WIDTH / 2, 297);
+
+    const mario = new Player(SCREEN_WIDTH / 2 - 16, 373);
     mario.draw(ctx, 0, this.animTick);
   }
 
   drawGameOver() {
     const { ctx } = this;
-    // 暖色渐变背景
-    const grad = ctx.createLinearGradient(0, 0, 0, SCREEN_HEIGHT);
-    grad.addColorStop(0, "#1a0533");
-    grad.addColorStop(0.6, "#2d1b69");
-    grad.addColorStop(1, "#4a2080");
-    ctx.fillStyle = grad;
+    ctx.fillStyle = "#171A21";
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // 星星点缀
@@ -975,11 +998,6 @@ export class Game {
     const mario = new Player(SCREEN_WIDTH / 2 - 16, 350);
     mario.draw(ctx, 0, this.animTick);
 
-    // 闪烁提示
-    ctx.font = "16px 'Courier New', monospace";
-    ctx.fillStyle = "#AAAAAA";
-    const blink = Math.sin(this.animTick * 0.08) > 0;
-    if (blink) ctx.fillText("按 ENTER 重新开始", SCREEN_WIDTH / 2, 460);
   }
 
   drawWin() {
@@ -994,7 +1012,5 @@ export class Game {
     ctx.font = "18px 'Courier New', monospace";
     ctx.fillText(`最终得分: ${this.player.score}`, SCREEN_WIDTH / 2, 220);
     ctx.fillText(`金币: ${this.player.coins}`, SCREEN_WIDTH / 2, 250);
-    const blink = Math.sin(this.animTick * 0.1) > 0;
-    if (blink) ctx.fillText("按 ENTER 继续", SCREEN_WIDTH / 2, 300);
   }
 }

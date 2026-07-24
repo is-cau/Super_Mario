@@ -38,7 +38,5 @@ export const TILE = 16 * PIXEL; // = 32
 // 游戏状态
 export type GameState = "menu" | "playing" | "gameover" | "win";
 
-// 音效开关
-export const SFX_ENABLED = true;
 // 音效类型
 export type SfxType = "jump" | "coin" | "mushroom" | "stomp" | "hurt" | "win" | "powerup" | "gameover";
